@@ -18,7 +18,6 @@ function getGeminiClient(): GoogleGenerativeAI | null {
 }
 
 function getBestModel(client: GoogleGenerativeAI) {
-  // Official active model aliases for Gemini API
   return client.getGenerativeModel({ model: 'gemini-flash-latest' });
 }
 
@@ -86,10 +85,12 @@ Return ONLY valid JSON:
     try {
       const result = await model.generateContent(prompt);
       text = result.response.text();
-    } catch (modelErr) {
-      const proModel = client.getGenerativeModel({ model: 'gemini-pro-latest' });
-      const result = await proModel.generateContent(prompt);
-      text = result.response.text();
+    } catch (modelErr: any) {
+      if (modelErr.message && modelErr.message.includes('429')) {
+        await new Promise(r => setTimeout(r, 6000));
+        const retryResult = await model.generateContent(prompt).catch(() => null);
+        if (retryResult) text = retryResult.response.text();
+      }
     }
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -191,13 +192,15 @@ Output ONLY the final answer value.
     try {
       const result = await model.generateContent(prompt);
       text = result.response.text();
-    } catch (modelErr) {
-      const proModel = client.getGenerativeModel({ model: 'gemini-pro-latest' });
-      const result = await proModel.generateContent(prompt);
-      text = result.response.text();
+    } catch (modelErr: any) {
+      if (modelErr.message && modelErr.message.includes('429')) {
+        await new Promise(r => setTimeout(r, 6000));
+        const retryResult = await model.generateContent(prompt).catch(() => null);
+        if (retryResult) text = retryResult.response.text();
+      }
     }
 
-    computedAnswer = text.trim().replace(/^["']|["']$/g, '');
+    computedAnswer = text ? text.trim().replace(/^["']|["']$/g, '') : Math.floor(profile.totalYoe).toString();
     saveAnswerToCache(questionText, computedAnswer);
     return computedAnswer;
   } catch (err: any) {

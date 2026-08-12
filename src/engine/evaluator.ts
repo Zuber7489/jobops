@@ -7,7 +7,7 @@ export async function evaluateJobs(forceAll: boolean = true): Promise<JobRecord[
   const db = getDb();
 
   const useGemini = Boolean(CONFIG.geminiApiKey && CONFIG.geminiApiKey !== 'your_gemini_api_key_here');
-  console.log(`\n🤖 Engine Mode: ${useGemini ? 'Gemini 1.5 Flash AI' : 'Local Rule Engine'}`);
+  console.log(`\n🤖 Engine Mode: ${useGemini ? 'Gemini AI Engine' : 'Local Rule Engine'}`);
 
   const whereClause = forceAll ? `WHERE status IN ('scanned', 'evaluated')` : `WHERE status = 'scanned'`;
   const jobsToEvaluate = db.prepare(`SELECT * FROM jobs ${whereClause}`).all() as JobRecord[];
@@ -22,6 +22,8 @@ export async function evaluateJobs(forceAll: boolean = true): Promise<JobRecord[
     let reason = '';
 
     if (useGemini) {
+      // 1.2s delay to prevent hitting Gemini API 15 RPM free-tier rate limit
+      await new Promise(r => setTimeout(r, 1200));
       const geminiResult = await evaluateJobWithGemini(job.title, job.company, job.jd_text);
       score = geminiResult.score;
       reason = `[Gemini AI] ${geminiResult.reason}`;
