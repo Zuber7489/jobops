@@ -18,11 +18,7 @@ function getGeminiClient(): GoogleGenerativeAI | null {
 }
 
 function getBestModel(client: GoogleGenerativeAI) {
-  try {
-    return client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-  } catch (e) {
-    return client.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  }
+  return client.getGenerativeModel({ model: 'gemini-1.5-flash' });
 }
 
 function loadAnswersCache(): Record<string, string> {
@@ -85,8 +81,17 @@ Return ONLY valid JSON:
 }
 `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    let text = '';
+    try {
+      const result = await model.generateContent(prompt);
+      text = result.response.text();
+    } catch (modelErr) {
+      // Fallback to gemini-1.5-pro if flash model has temporary API issues
+      const proModel = client.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const result = await proModel.generateContent(prompt);
+      text = result.response.text();
+    }
+
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
@@ -99,7 +104,7 @@ Return ONLY valid JSON:
     console.error(`⚠️ [Gemini AI Evaluation Error]: ${err.message}`);
   }
 
-  return { score: 3.5, reason: 'Gemini AI Fallback Score' };
+  return { score: 3.5, reason: 'Gemini AI Rule Baseline' };
 }
 
 export async function answerQuestionWithGemini(questionText: string, jobTitle: string): Promise<string> {
@@ -182,8 +187,17 @@ Provide a clean numeric or 1-word answer (e.g., 2, 3.2, 6.5, 650000, 15, Yes, No
 Output ONLY the final answer value.
 `;
 
-    const result = await model.generateContent(prompt);
-    computedAnswer = result.response.text().trim().replace(/^["']|["']$/g, '');
+    let text = '';
+    try {
+      const result = await model.generateContent(prompt);
+      text = result.response.text();
+    } catch (modelErr) {
+      const proModel = client.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const result = await proModel.generateContent(prompt);
+      text = result.response.text();
+    }
+
+    computedAnswer = text.trim().replace(/^["']|["']$/g, '');
     saveAnswerToCache(questionText, computedAnswer);
     return computedAnswer;
   } catch (err: any) {
