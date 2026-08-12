@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables & API Keys
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# SQLite Database & Storage
+*.sqlite
+*.sqlite-journal
+jobops.sqlite
+
+# Chrome user session data
+.chrome-user-data/
+.chrome-session/
+
+# Logs & Temporary Files
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

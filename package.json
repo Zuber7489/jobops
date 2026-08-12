@@ -1,0 +1,29 @@
+{
+  "name": "jobops",
+  "version": "1.0.0",
+  "description": "JobOps CLI - Naukri.com & LinkedIn Job Automation Engine",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "jobops": "ts-node src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "better-sqlite3": "^11.8.1",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "inquirer": "^9.3.7",
+    "playwright": "^1.50.1",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.13.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
