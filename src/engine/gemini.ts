@@ -18,7 +18,8 @@ function getGeminiClient(): GoogleGenerativeAI | null {
 }
 
 function getBestModel(client: GoogleGenerativeAI) {
-  return client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  // Official active model aliases for Gemini API
+  return client.getGenerativeModel({ model: 'gemini-flash-latest' });
 }
 
 function loadAnswersCache(): Record<string, string> {
@@ -86,8 +87,7 @@ Return ONLY valid JSON:
       const result = await model.generateContent(prompt);
       text = result.response.text();
     } catch (modelErr) {
-      // Fallback to gemini-1.5-pro if flash model has temporary API issues
-      const proModel = client.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const proModel = client.getGenerativeModel({ model: 'gemini-pro-latest' });
       const result = await proModel.generateContent(prompt);
       text = result.response.text();
     }
@@ -101,7 +101,7 @@ Return ONLY valid JSON:
       };
     }
   } catch (err: any) {
-    console.error(`⚠️ [Gemini AI Evaluation Error]: ${err.message}`);
+    console.error(`⚠️ [Gemini AI Evaluation Note]: ${err.message}`);
   }
 
   return { score: 3.5, reason: 'Gemini AI Rule Baseline' };
@@ -192,7 +192,7 @@ Output ONLY the final answer value.
       const result = await model.generateContent(prompt);
       text = result.response.text();
     } catch (modelErr) {
-      const proModel = client.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const proModel = client.getGenerativeModel({ model: 'gemini-pro-latest' });
       const result = await proModel.generateContent(prompt);
       text = result.response.text();
     }
