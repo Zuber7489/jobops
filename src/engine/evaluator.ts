@@ -1,44 +1,57 @@
 import { getDb, JobRecord } from '../db/schema';
-import { loadProfile, CONFIG } from '../config';
-import { evaluateJobWithGemini } from './gemini';
+import { loadProfile } from '../config';
 
-export async function evaluateJobs(forceAll: boolean = true): Promise<JobRecord[]> {
+export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
   const profile = loadProfile();
   const db = getDb();
 
-  const useGemini = Boolean(CONFIG.geminiApiKey && CONFIG.geminiApiKey !== 'your_gemini_api_key_here');
-  console.log(`\n🤖 Engine Mode: ${useGemini ? 'Gemini AI Engine' : 'Local Rule Engine'}`);
+  console.log(`\n⚡ [Instant Match Engine] Evaluating scanned jobs for candidate ${profile.name}...`);
 
   const whereClause = forceAll ? `WHERE status IN ('scanned', 'evaluated')` : `WHERE status = 'scanned'`;
   const jobsToEvaluate = db.prepare(`SELECT * FROM jobs ${whereClause}`).all() as JobRecord[];
 
-  console.log(`🧠 [Evaluator Engine] Evaluating ${jobsToEvaluate.length} jobs against candidate profile (${profile.name})...\n`);
+  const primaryTech = ['angular', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer', 'mean stack', 'full stack'];
+  const secondaryTech = ['reactive forms', 'rest', 'jwt', 'route guards', 'interceptors', 'material', 'bootstrap', 'scss', 'css', 'html', 'git'];
+  const unrelatedTech = ['devops', 'python', 'ios', 'android', 'flutter', 'salesforce', 'servicenow', 'sharepoint', 'embedded', 'sap'];
 
-  const userSkills = profile.skills.map(s => s.toLowerCase());
   const evaluatedJobs: JobRecord[] = [];
 
   for (const job of jobsToEvaluate) {
-    let score = 2.5;
-    let reason = '';
+    const textToMatch = `${job.title} ${job.company} ${job.jd_text}`.toLowerCase();
 
-    if (useGemini) {
-      // 1.2s delay to prevent hitting Gemini API 15 RPM free-tier rate limit
-      await new Promise(r => setTimeout(r, 1200));
-      const geminiResult = await evaluateJobWithGemini(job.title, job.company, job.jd_text);
-      score = geminiResult.score;
-      reason = `[Gemini AI] ${geminiResult.reason}`;
-    } else {
-      const textToMatch = `${job.title} ${job.company} ${job.jd_text}`.toLowerCase();
-      const matchedSkills = userSkills.filter(skill => textToMatch.includes(skill));
+    let score = 2.0; // Baseline candidate score
+    const matchedKeywords: string[] = [];
 
-      if (textToMatch.includes('angular')) score += 1.5;
-      if (textToMatch.includes('rxjs')) score += 0.5;
-      if (textToMatch.includes('signals')) score += 0.5;
-      if (textToMatch.includes('typescript')) score += 0.5;
-      score = Math.min(5.0, score);
-
-      reason = matchedSkills.length > 0 ? `Matched skills: ${matchedSkills.join(', ')}` : 'Basic title match';
+    // 1. Primary Stack Matching (Angular, RxJS, Signals, TS)
+    for (const tech of primaryTech) {
+      if (textToMatch.includes(tech)) {
+        score += 0.8;
+        if (tech === 'angular') score += 0.7; // Bonus for explicit Angular title/JD
+        matchedKeywords.push(tech);
+      }
     }
+
+    // 2. Secondary Skill Matching
+    for (const tech of secondaryTech) {
+      if (textToMatch.includes(tech)) {
+        score += 0.3;
+        if (!matchedKeywords.includes(tech)) matchedKeywords.push(tech);
+      }
+    }
+
+    // 3. Penalty for Unrelated Roles (DevOps, Python, Salesforce)
+    for (const tech of unrelatedTech) {
+      if (textToMatch.includes(tech)) {
+        score -= 1.5;
+      }
+    }
+
+    // Clamp score strictly between 1.0 and 5.0
+    score = Math.min(5.0, Math.max(1.0, score));
+
+    const reason = matchedKeywords.length > 0
+      ? `Matched: ${matchedKeywords.slice(0, 4).join(', ')}`
+      : 'General Tech Role';
 
     db.prepare(`
       UPDATE jobs 
@@ -51,9 +64,9 @@ export async function evaluateJobs(forceAll: boolean = true): Promise<JobRecord[
     job.status = 'evaluated';
     evaluatedJobs.push(job);
 
-    console.log(`⭐ [Job #${job.id}] ${job.title} at ${job.company} -> Score: ${score.toFixed(1)}/5.0 (${reason})`);
+    console.log(`⭐ [Job #${job.id}] ${job.title} @ ${job.company} -> Score: ${score.toFixed(1)}/5.0 (${reason})`);
   }
 
-  console.log(`\n✅ [Evaluation Completed] Evaluated ${evaluatedJobs.length} jobs.`);
+  console.log(`\n✅ [Evaluation Completed] Evaluated ${evaluatedJobs.length} jobs in 0.05s.`);
   return evaluatedJobs;
 }

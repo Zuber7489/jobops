@@ -54,9 +54,9 @@ program
 // Command 3: evaluate
 program
   .command('evaluate')
-  .description('Evaluate scanned LinkedIn jobs against candidate profile & resume using Gemini AI')
-  .action(async () => {
-    await evaluateJobs();
+  .description('Evaluate scanned LinkedIn jobs instantly against candidate skills')
+  .action(() => {
+    evaluateJobs();
   });
 
 // Command 4: linkedin-apply
