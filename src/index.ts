@@ -98,6 +98,11 @@ program
         break;
       }
 
+      if (result === 'limit_reached') {
+        console.log(`\n🛑 [LinkedIn Daily Limit Reached] LinkedIn caps Easy Apply submissions per 24 hours. Pausing application queue until tomorrow.`);
+        break;
+      }
+
       if (result === 'applied' || result === 'already_applied') {
         appliedCount++;
       } else {

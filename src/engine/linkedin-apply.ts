@@ -30,7 +30,7 @@ async function findVisibleElement(page: Page, selectors: string[], timeoutMs: nu
   return null;
 }
 
-export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed';
+export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed' | 'limit_reached';
 
 export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
   const profile = loadProfile();
@@ -73,6 +73,13 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       console.log(`⚠️ LinkedIn is not logged in inside the active Chrome window.`);
       console.log(`👉 Please make sure Chrome (launched via launch-chrome) is logged into https://linkedin.com`);
       return 'not_logged_in';
+    }
+
+    // Check for LinkedIn Daily Limit warning
+    const pageLimitText = page.locator('*:has-text("daily application limit"), *:has-text("reached your daily"), *:has-text("reached today"), *:has-text("limit for today")').first();
+    if (await pageLimitText.isVisible().catch(() => false)) {
+      console.log(`🛑 [LinkedIn Daily Limit Reached] You have reached LinkedIn's maximum daily Easy Apply limit for today!`);
+      return 'limit_reached';
     }
 
     // Check if already applied
@@ -118,6 +125,13 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       await easyApplyBtn.click({ force: true }).catch(() => null);
     }
     await page.waitForTimeout(2500);
+
+    // Verify daily limit toast/banner after click
+    const clickLimitText = page.locator('*:has-text("daily application limit"), *:has-text("reached your daily"), *:has-text("reached today"), *:has-text("limit for today")').first();
+    if (await clickLimitText.isVisible().catch(() => false)) {
+      console.log(`🛑 [LinkedIn Daily Limit Reached] You have reached LinkedIn's maximum daily Easy Apply limit for today!`);
+      return 'limit_reached';
+    }
 
     // Verify modal dialog actually opened
     const modal = await findVisibleElement(page, ['div[role="dialog"]', 'div.artdeco-modal', 'div.jobs-easy-apply-content'], 6000);
