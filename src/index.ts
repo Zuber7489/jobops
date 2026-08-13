@@ -70,7 +70,7 @@ program
     const minScore = parseFloat(options.minScore);
     const db = getDb();
 
-    let jobsToApply = [];
+    let jobsToApply: any[] = [];
     if (options.id) {
       jobsToApply = db.prepare(`SELECT * FROM jobs WHERE external_job_id = ?`).all(options.id);
     } else {
@@ -82,11 +82,30 @@ program
       return;
     }
 
-    console.log(`📋 Found ${jobsToApply.length} LinkedIn job(s) ready for application (Auto Mode: ${options.auto ? 'ENABLED ⚡' : 'DISABLED ✋'}).`);
-    for (const job of jobsToApply) {
-      const success = await applyLinkedInJob(job as any, { autoSubmit: options.auto });
-      if (!success) break; // Stop loop cleanly if CDP connection is missing
+    console.log(`📋 Found ${jobsToApply.length} LinkedIn job(s) ready for application (Auto Mode: ${options.auto ? 'ENABLED ⚡' : 'DISABLED ✋'}).\n`);
+    let appliedCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 0; i < jobsToApply.length; i++) {
+      const job: any = jobsToApply[i];
+      console.log(`--------------------------------------------------`);
+      console.log(`📌 Processing job [${i + 1}/${jobsToApply.length}]: "${job.title}" at ${job.company}`);
+      
+      const result = await applyLinkedInJob(job, { autoSubmit: options.auto });
+
+      if (result === 'connection_error' || result === 'not_logged_in') {
+        console.log(`\n🛑 Aborting job queue due to browser session or CDP connection error.`);
+        break;
+      }
+
+      if (result === 'applied' || result === 'already_applied') {
+        appliedCount++;
+      } else {
+        skippedCount++;
+      }
     }
+
+    console.log(`\n✨ Queue Complete! Processed ${appliedCount + skippedCount} jobs (${appliedCount} applied/already applied, ${skippedCount} skipped/failed).`);
   });
 
 // Command 5: status

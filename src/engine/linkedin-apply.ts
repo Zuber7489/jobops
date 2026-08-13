@@ -8,9 +8,11 @@ export interface ApplyOptions {
   autoSubmit?: boolean;
 }
 
-export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<boolean> {
+export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed';
+
+export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
   const profile = loadProfile();
-  console.log(`\n🚀 [LinkedIn Easy Apply] Target Job: "${job.title}" at ${job.company}`);
+  console.log(`\n🚀 [LinkedIn Apply] Target Job: "${job.title}" at ${job.company}`);
   console.log(`🔗 Job URL: ${job.url}`);
 
   let browserContext: BrowserContext | null = null;
@@ -27,27 +29,79 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     } catch (cdpErr) {
       console.log(`\n❌ [Connection Required] Active Chrome browser session not found on CDP port ${CONFIG.cdpPort}.`);
       console.log(`👉 Please run: npx ts-node src/index.ts launch-chrome\n`);
-      return false;
+      return 'connection_error';
     }
 
-    console.log(`🌐 Navigating to LinkedIn job page...`);
-    await page.goto(job.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(3000);
+    // Extract numeric job ID if present for direct logged-in search URL routing
+    const jobIdMatch = job.url.match(/(\d{8,12})/);
+    const rawJobId = jobIdMatch ? jobIdMatch[1] : null;
+
+    // Use direct search URL format if job ID is known (most reliable in authenticated Chrome session)
+    const targetUrl = rawJobId 
+      ? `https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`
+      : job.url;
+
+    console.log(`🌐 Navigating to LinkedIn job page: ${targetUrl}`);
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(4000);
 
     // Check auth status
-    const loginBtn = page.locator('a.nav__button-secondary:has-text("Sign in"), button:has-text("Sign in")').first();
+    const loginBtn = page.locator('a.nav__button-secondary:has-text("Sign in"), button:has-text("Sign in"), a[href*="login"]').first();
     if (await loginBtn.isVisible().catch(() => false)) {
-      console.log(`⚠️ LinkedIn is not logged in inside this Chrome window. Please log into LinkedIn.`);
-      return false;
+      console.log(`⚠️ LinkedIn is not logged in inside the active Chrome window.`);
+      console.log(`👉 Please make sure Chrome (launched via launch-chrome) is logged into https://linkedin.com`);
+      return 'not_logged_in';
     }
 
-    // Locate "Easy Apply" button
-    const easyApplyBtn = page.locator('button.jobs-apply-button, button:has-text("Easy Apply")').first();
+    // Check if already applied
+    const alreadyApplied = page.locator('span:has-text("Applied"), button:has-text("Applied"), .jobs-s-apply span:has-text("Applied")').first();
+    if (await alreadyApplied.isVisible().catch(() => false)) {
+      console.log(`ℹ️ Job "${job.title}" at ${job.company} is already applied on LinkedIn.`);
+      updateJobStatus(job.external_job_id, 'applied');
+      return 'already_applied';
+    }
 
-    if (!(await easyApplyBtn.isVisible().catch(() => false))) {
-      console.log(`⚠️ "Easy Apply" button not visible or already applied.`);
+    // Locate "Easy Apply" button with broad selector support
+    const easyApplySelector = [
+      'button.jobs-apply-button',
+      'button.jobs-apply-button--top-card',
+      'button:has-text("Easy Apply")',
+      'span.artdeco-button__text:has-text("Easy Apply")',
+      '.jobs-s-apply button',
+      'button[aria-label*="Easy Apply"]',
+      'button[data-job-id]'
+    ].join(', ');
+
+    const easyApplyBtn = page.locator(easyApplySelector).first();
+
+    // Wait up to 5s for the Easy Apply button to appear in case of dynamic rendering
+    let isBtnVisible = false;
+    try {
+      await easyApplyBtn.waitFor({ state: 'visible', timeout: 5000 });
+      isBtnVisible = true;
+    } catch {
+      isBtnVisible = false;
+    }
+
+    if (!isBtnVisible) {
+      // Fallback check: fallback navigation to direct /jobs/view/ URL if search view didn't render it
+      if (targetUrl !== job.url) {
+        console.log(`🔄 Retrying with original URL: ${job.url}`);
+        await page.goto(job.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(4000);
+        try {
+          await easyApplyBtn.waitFor({ state: 'visible', timeout: 5000 });
+          isBtnVisible = true;
+        } catch {
+          isBtnVisible = false;
+        }
+      }
+    }
+
+    if (!isBtnVisible) {
+      console.log(`⏩ "Easy Apply" button not visible (external apply position). Skipping.`);
       updateJobStatus(job.external_job_id, 'skipped');
-      return false;
+      return 'skipped';
     }
 
     console.log(`👆 Opening Easy Apply modal dialog...`);
@@ -203,7 +257,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
           if (!answer.confirmSubmit) {
             console.log(`🛑 Application cancelled by user.`);
             updateJobStatus(job.external_job_id, 'skipped');
-            return false;
+            return 'skipped';
           }
         } else {
           console.log(`⚡ Auto-submitting application (Hands-Free Mode)...`);
@@ -220,7 +274,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
         console.log(`🎉 [LinkedIn Apply Success] Application submitted for "${job.title}" at ${job.company}!`);
         updateJobStatus(job.external_job_id, 'applied');
-        return true;
+        return 'applied';
       }
 
       // Step F: Proceed to next step
@@ -242,11 +296,15 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     }
 
     updateJobStatus(job.external_job_id, 'applied');
-    return true;
+    return 'applied';
 
   } catch (err: any) {
     console.error(`❌ [LinkedIn Apply Error]: ${err.message}`);
     updateJobStatus(job.external_job_id, 'failed');
-    return false;
+    return 'failed';
+  } finally {
+    if (page) {
+      await page.close().catch(() => null);
+    }
   }
 }
