@@ -6,6 +6,21 @@ import { CONFIG, loadProfile } from '../config';
 let genAI: GoogleGenerativeAI | null = null;
 const ANSWERS_FILE = path.join(process.cwd(), 'answers.json');
 
+// ── Model Waterfall ───────────────────────────────────────────────────────────
+// Priority order: highest free-tier limits first (RPM × RPD).
+// Gemini 3.1 Flash Lite  = 15 RPM, 250K TPM, 500 RPD ← PRIMARY (best overall)
+// Gemini 2.5 Flash Lite  = 10 RPM, 250K TPM, 500 RPD ← fallback #1
+// Gemini 2.0 Flash Lite  = generous free tier         ← fallback #2
+// Gemini 1.5 Flash       = very generous RPD          ← fallback #3
+// Gemini flash-latest    = 24 RPD only                ← last resort
+const MODEL_WATERFALL = [
+  'gemini-3.1-flash-lite',               // Gemini 3.1 Flash Lite  — 15 RPM, 500 RPD ⭐ PRIMARY
+  'gemini-2.5-flash-lite-preview-06-17', // Gemini 2.5 Flash Lite  — 10 RPM, 500 RPD
+  'gemini-2.0-flash-lite',               // Gemini 2.0 Flash Lite  — generous free tier
+  'gemini-1.5-flash-latest',             // Gemini 1.5 Flash       — very generous RPD
+  'gemini-flash-latest',                 // 3.6 Flash last resort  — only 24 RPD
+];
+
 function getGeminiClient(): GoogleGenerativeAI | null {
   const apiKey = CONFIG.geminiApiKey || process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
@@ -17,8 +32,45 @@ function getGeminiClient(): GoogleGenerativeAI | null {
   return genAI;
 }
 
-function getBestModel(client: GoogleGenerativeAI) {
-  return client.getGenerativeModel({ model: 'gemini-flash-latest' });
+/**
+ * Calls Gemini with automatic model waterfall + exponential backoff.
+ * On 429 / quota errors it tries the next model in the tier list.
+ */
+async function callGeminiWithFallback(client: GoogleGenerativeAI, prompt: string): Promise<string> {
+  for (const modelName of MODEL_WATERFALL) {
+    const model = client.getGenerativeModel({ model: modelName });
+    // Exponential backoff within a single model: 0s → 6s → 12s → 24s
+    for (const delay of [0, 6000, 12000, 24000]) {
+      if (delay > 0) {
+        console.log(`⏳ Rate limited on ${modelName}. Retrying in ${delay / 1000}s...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        if (modelName !== MODEL_WATERFALL[0]) {
+          console.log(`🔄 [Model Fallback] Used ${modelName} (primary model rate limited)`);
+        }
+        return text;
+      } catch (err: any) {
+        const isRateLimit = err.message && (
+          err.message.includes('429') ||
+          err.message.includes('quota') ||
+          err.message.includes('RESOURCE_EXHAUSTED')
+        );
+        if (!isRateLimit) {
+          // Non-rate-limit error — skip to next model immediately
+          console.warn(`⚠️ [${modelName}] Error: ${err.message}`);
+          break;
+        }
+        // Rate limit — keep looping with backoff
+        if (delay === 24000) {
+          console.warn(`⚠️ [${modelName}] Still rate limited after max backoff. Trying next model.`);
+        }
+      }
+    }
+  }
+  throw new Error('All Gemini models exhausted or rate limited. Please wait and try again.');
 }
 
 function loadAnswersCache(): Record<string, string> {
@@ -55,8 +107,6 @@ export async function evaluateJobWithGemini(jobTitle: string, company: string, j
     const cvPath = path.join(process.cwd(), 'cv.md');
     const cvText = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : JSON.stringify(profile);
 
-    const model = getBestModel(client);
-
     const prompt = `
 You are an expert AI Job Match Evaluator analyzing an Angular Developer candidate.
 
@@ -81,20 +131,7 @@ Return ONLY valid JSON:
 }
 `;
 
-    let text = '';
-    try {
-      const result = await model.generateContent(prompt);
-      text = result.response.text();
-    } catch (modelErr: any) {
-      if (modelErr.message && (modelErr.message.includes('429') || modelErr.message.includes('quota'))) {
-        // Exponential backoff: 6s → 12s → 24s
-        for (const delay of [6000, 12000, 24000]) {
-          await new Promise(r => setTimeout(r, delay));
-          const retryResult = await model.generateContent(prompt).catch(() => null);
-          if (retryResult) { text = retryResult.response.text(); break; }
-        }
-      }
-    }
+    const text = await callGeminiWithFallback(client, prompt);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -175,8 +212,6 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
       const cvPath = path.join(process.cwd(), 'cv.md');
       const cvText = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : JSON.stringify(profile);
 
-      const model = getBestModel(client);
-
       const prompt = `
 You are an expert AI Job Application Assistant reasoning on behalf of candidate ${profile.name} applying for "${jobTitle}".
 
@@ -207,22 +242,7 @@ Instructions & Response Rules:
 4. Output ONLY the concise final answer string value (e.g., 2, 0, 15, 320000, 650000, Yes, No). No sentences or markdown formatting.
 `;
 
-      let rawText = '';
-      try {
-        const result = await model.generateContent(prompt);
-        rawText = result.response.text();
-      } catch (rateErr: any) {
-        if (rateErr.message && (rateErr.message.includes('429') || rateErr.message.includes('quota'))) {
-          // Exponential backoff: 6s → 12s → 24s
-          for (const delay of [6000, 12000, 24000]) {
-            await new Promise(r => setTimeout(r, delay));
-            const retryResult = await model.generateContent(prompt).catch(() => null);
-            if (retryResult) { rawText = retryResult.response.text(); break; }
-          }
-        } else {
-          throw rateErr;
-        }
-      }
+      const rawText = await callGeminiWithFallback(client, prompt);
       aiAnswer = rawText ? rawText.trim().replace(/^["']|["']$/g, '') : '';
       console.log(`🤖 [Gemini AI Reasoned] "${questionText}" ➔ "${aiAnswer}"`);
     } catch (aiErr: any) {
