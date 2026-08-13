@@ -27,3 +27,6 @@ skills:
   - "CSS3"
   - "Git"
 resumePath: "./cv.md"
+# Place your PDF resume here and update the path below for auto-upload:
+resumeUploadPath: "./resume.pdf"
+

@@ -17,6 +17,7 @@ export interface UserProfile {
   location: string;
   skills: string[];
   resumePath: string;
+  resumeUploadPath?: string; // Optional: Path to PDF resume for auto-upload on LinkedIn Easy Apply
 }
 
 export const CONFIG = {

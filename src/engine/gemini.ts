@@ -86,10 +86,13 @@ Return ONLY valid JSON:
       const result = await model.generateContent(prompt);
       text = result.response.text();
     } catch (modelErr: any) {
-      if (modelErr.message && modelErr.message.includes('429')) {
-        await new Promise(r => setTimeout(r, 6000));
-        const retryResult = await model.generateContent(prompt).catch(() => null);
-        if (retryResult) text = retryResult.response.text();
+      if (modelErr.message && (modelErr.message.includes('429') || modelErr.message.includes('quota'))) {
+        // Exponential backoff: 6s → 12s → 24s
+        for (const delay of [6000, 12000, 24000]) {
+          await new Promise(r => setTimeout(r, delay));
+          const retryResult = await model.generateContent(prompt).catch(() => null);
+          if (retryResult) { text = retryResult.response.text(); break; }
+        }
       }
     }
 
@@ -204,8 +207,22 @@ Instructions & Response Rules:
 4. Output ONLY the concise final answer string value (e.g., 2, 0, 15, 320000, 650000, Yes, No). No sentences or markdown formatting.
 `;
 
-      const result = await model.generateContent(prompt);
-      const rawText = result.response.text();
+      let rawText = '';
+      try {
+        const result = await model.generateContent(prompt);
+        rawText = result.response.text();
+      } catch (rateErr: any) {
+        if (rateErr.message && (rateErr.message.includes('429') || rateErr.message.includes('quota'))) {
+          // Exponential backoff: 6s → 12s → 24s
+          for (const delay of [6000, 12000, 24000]) {
+            await new Promise(r => setTimeout(r, delay));
+            const retryResult = await model.generateContent(prompt).catch(() => null);
+            if (retryResult) { rawText = retryResult.response.text(); break; }
+          }
+        } else {
+          throw rateErr;
+        }
+      }
       aiAnswer = rawText ? rawText.trim().replace(/^["']|["']$/g, '') : '';
       console.log(`🤖 [Gemini AI Reasoned] "${questionText}" ➔ "${aiAnswer}"`);
     } catch (aiErr: any) {

@@ -7,17 +7,18 @@ export interface LinkedInScanOptions {
   location: string;
   maxPages?: number;
   headless?: boolean;
+  workTypes?: string; // e.g. '2,3' for Remote & Hybrid. Default: '2,3'
 }
 
 export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<JobRecord[]> {
-  const { query, location = 'India', maxPages = 3, headless = true } = options;
+  const { query, location = 'India', maxPages = 3, headless = true, workTypes = '2,3' } = options;
 
-  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Hybrid/Remote Filtered)...`);
+  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Remote/Hybrid Filtered)...`);
 
   const encodedQuery = encodeURIComponent(query);
   const encodedLocation = encodeURIComponent(location);
   // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types)
-  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=2,3`;
+  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=${workTypes}`;
 
   let browserContext: BrowserContext | null = null;
   let standaloneBrowser: any = null;
@@ -27,7 +28,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
   const scrapedJobs: JobRecord[] = [];
 
   try {
-    // Try connecting to active logged-in Chrome session first
+    // Try connecting to active logged-in Chrome session first (preferred — uses your real session)
     try {
       const browser = await chromium.connectOverCDP(`http://localhost:${CONFIG.cdpPort}`);
       browserContext = browser.contexts()[0] || await browser.newContext();
@@ -57,7 +58,8 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       console.log(`🌐 Navigating to LinkedIn Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(3000 + Math.random() * 2000);
+      // Random delay to appear human (2.5s – 5s)
+      await page.waitForTimeout(2500 + Math.floor(Math.random() * 2500));
 
       // Select job card containers
       const jobCards = page.locator('ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
@@ -76,9 +78,11 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
           const card = jobCards.nth(i);
           const cardText = (await card.textContent().catch(() => '')) || '';
 
-          // Strict check: In public guest mode, verify the card actually has the "Easy Apply" badge
+          // In public guest mode without CDP, verify card has "Easy Apply" badge
+          // In authenticated CDP mode, LinkedIn's f_AL=true filter is reliable — skip badge check
           if (!isCdpSession) {
-            const hasEasyApplyTag = cardText.includes('Easy Apply') || (await card.locator('*:has-text("Easy Apply")').count()) > 0;
+            const hasEasyApplyTag = cardText.toLowerCase().includes('easy apply') ||
+              (await card.locator('*:has-text("Easy Apply")').count()) > 0;
             if (!hasEasyApplyTag) {
               continue; // Skip non-Easy-Apply positions during scan
             }
@@ -121,7 +125,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
             company,
             location: locText,
             url: url.startsWith('http') ? url : `https://www.linkedin.com${url}`,
-            jd_text: `LinkedIn Hybrid/Remote Easy Apply Job: ${title} at ${company}`,
+            jd_text: `LinkedIn Remote/Hybrid Easy Apply Job: ${title} at ${company}`,
             apply_type: 'easy-apply',
             score: 0.0,
             status: 'scanned'

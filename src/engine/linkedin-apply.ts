@@ -1,5 +1,7 @@
 import { chromium, BrowserContext, Page } from 'playwright';
 import inquirer from 'inquirer';
+import path from 'path';
+import fs from 'fs';
 import { CONFIG, loadProfile } from '../config';
 import { updateJobStatus, JobRecord } from '../db/schema';
 import { answerQuestionWithGemini } from './gemini';
@@ -7,6 +9,48 @@ import { answerQuestionWithGemini } from './gemini';
 export interface ApplyOptions {
   autoSubmit?: boolean;
 }
+
+// ── Humanize helpers ──────────────────────────────────────────────────────────
+
+/** Random delay between minMs and maxMs to simulate human think-time */
+async function humanDelay(page: Page, minMs = 1500, maxMs = 4000) {
+  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+  await page.waitForTimeout(delay);
+}
+
+/** Simulate a gentle mouse drift across the viewport before clicking */
+async function simulateMouseMovement(page: Page) {
+  try {
+    const vw = page.viewportSize()?.width || 1280;
+    const vh = page.viewportSize()?.height || 800;
+    const steps = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < steps; i++) {
+      await page.mouse.move(
+        Math.floor(Math.random() * vw),
+        Math.floor(Math.random() * vh),
+        { steps: 10 }
+      );
+      await page.waitForTimeout(100 + Math.floor(Math.random() * 200));
+    }
+  } catch {
+    // soft catch
+  }
+}
+
+/** Simulate a short scroll on the page to appear human */
+async function simulateScroll(page: Page) {
+  try {
+    const scrollAmount = 200 + Math.floor(Math.random() * 300);
+    await page.mouse.wheel(0, scrollAmount);
+    await page.waitForTimeout(400 + Math.floor(Math.random() * 400));
+    await page.mouse.wheel(0, -scrollAmount / 2);
+    await page.waitForTimeout(300);
+  } catch {
+    // soft catch
+  }
+}
+
+// ── Visibility helper ─────────────────────────────────────────────────────────
 
 async function findVisibleElement(page: Page, selectors: string[], timeoutMs: number = 8000) {
   const startTime = Date.now();
@@ -30,7 +74,81 @@ async function findVisibleElement(page: Page, selectors: string[], timeoutMs: nu
   return null;
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed' | 'limit_reached';
+
+// ── PDF Resume Upload ─────────────────────────────────────────────────────────
+
+async function tryUploadResume(page: Page, modal: any, profile: ReturnType<typeof loadProfile>) {
+  try {
+    const resumeDir = path.resolve(process.cwd());
+    const candidatePdfPaths = [
+      // 1. Explicit resumeUploadPath from profile.yml (highest priority)
+      profile.resumeUploadPath ? path.resolve(profile.resumeUploadPath) : '',
+      // 2. Standard names in project root
+      path.join(resumeDir, 'resume.pdf'),
+      path.join(resumeDir, 'cv.pdf'),
+      path.join(resumeDir, 'Mohammad_Zuber_Resume.pdf'),
+    ].filter(Boolean);
+
+    const pdfPath = candidatePdfPaths.find(p => fs.existsSync(p));
+    if (!pdfPath) {
+      console.log(`📎 No PDF resume found at ${candidatePdfPaths[0] || './resume.pdf'} — skipping resume upload.`);
+      return;
+    }
+
+    // Find visible file input for resume upload
+    const fileInput = modal.locator('input[type="file"]').first();
+    if (await fileInput.count() > 0) {
+      await fileInput.setInputFiles(pdfPath).catch(() => null);
+      await page.waitForTimeout(1500);
+      console.log(`📎 Resume uploaded: ${path.basename(pdfPath)}`);
+    }
+  } catch {
+    // soft catch
+  }
+}
+
+// ── Cover Letter / Additional Info ────────────────────────────────────────────
+
+async function fillCoverLetterFields(page: Page, modal: any, job: JobRecord) {
+  try {
+    const coverLetterSelectors = [
+      'textarea[id*="coverletter"]',
+      'textarea[id*="cover-letter"]',
+      'textarea[placeholder*="cover letter" i]',
+      'textarea[aria-label*="cover letter" i]',
+      'textarea[aria-label*="additional" i]',
+      'textarea[aria-label*="message" i]',
+      'textarea[aria-label*="hiring" i]',
+    ];
+
+    for (const sel of coverLetterSelectors) {
+      const ta = modal.locator(sel).first();
+      if (await ta.isVisible().catch(() => false)) {
+        const existing = await ta.inputValue().catch(() => '');
+        if (!existing || existing.trim().length < 10) {
+          const profile = loadProfile();
+          const coverLetter = await answerQuestionWithGemini(
+            `Write a concise 3-sentence cover letter for "${job.title}" at "${job.company}" for a frontend developer with 2 years of Angular experience`,
+            job.title
+          );
+          await ta.focus();
+          await ta.fill('');
+          await ta.pressSequentially(coverLetter.slice(0, 1000), { delay: 20 });
+          await page.waitForTimeout(300);
+          console.log(`✍️ Cover letter filled for "${job.title}"`);
+        }
+        break;
+      }
+    }
+  } catch {
+    // soft catch
+  }
+}
+
+// ── Main Apply Function ───────────────────────────────────────────────────────
 
 export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
   const profile = loadProfile();
@@ -58,14 +176,17 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     const jobIdMatch = job.url.match(/(\d{8,12})/);
     const rawJobId = jobIdMatch ? jobIdMatch[1] : null;
 
-    // Direct /jobs/view/{jobId} URL is the cleanest and fastest way to render single job details on LinkedIn
-    const targetUrl = rawJobId 
+    const targetUrl = rawJobId
       ? `https://www.linkedin.com/jobs/view/${rawJobId}/`
       : job.url;
 
     console.log(`🌐 Navigating to LinkedIn job page: ${targetUrl}`);
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(3000);
+
+    // 🕐 Human-like random read pause after page load
+    await simulateMouseMovement(page);
+    await simulateScroll(page);
+    await humanDelay(page, 2000, 4500);
 
     // Check auth status
     const loginBtn = await findVisibleElement(page, ['a.nav__button-secondary:has-text("Sign in")', 'button:has-text("Sign in")', 'a[href*="login"]'], 1500);
@@ -75,7 +196,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       return 'not_logged_in';
     }
 
-    // Check for LinkedIn Daily Limit warning
+    // Check for LinkedIn Daily Limit warning (pre-click)
     const pageLimitText = page.locator('*:has-text("daily application limit"), *:has-text("reached your daily"), *:has-text("reached today"), *:has-text("limit for today")').first();
     if (await pageLimitText.isVisible().catch(() => false)) {
       console.log(`🛑 [LinkedIn Daily Limit Reached] You have reached LinkedIn's maximum daily Easy Apply limit for today!`);
@@ -104,11 +225,10 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     let easyApplyBtn = await findVisibleElement(page, easyApplySelectors, 6000);
 
     if (!easyApplyBtn && rawJobId) {
-      // Fallback check: try search view URL format if direct view didn't render it
       const searchViewUrl = `https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`;
       console.log(`🔄 Retrying with search view URL: ${searchViewUrl}`);
       await page.goto(searchViewUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(3000);
+      await humanDelay(page, 2000, 3500);
       easyApplyBtn = await findVisibleElement(page, easyApplySelectors, 6000);
     }
 
@@ -118,15 +238,21 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       return 'skipped';
     }
 
+    // Human-like pre-click behaviour
+    await simulateMouseMovement(page);
+    await humanDelay(page, 800, 1800);
+
     console.log(`👆 Opening Easy Apply modal dialog...`);
     try {
       await easyApplyBtn.click();
     } catch {
       await easyApplyBtn.click({ force: true }).catch(() => null);
     }
-    await page.waitForTimeout(2500);
 
-    // Verify daily limit toast/banner after click
+    // Human read pause after modal opens
+    await humanDelay(page, 1500, 3000);
+
+    // Check daily limit toast/banner after click
     const clickLimitText = page.locator('*:has-text("daily application limit"), *:has-text("reached your daily"), *:has-text("reached today"), *:has-text("limit for today")').first();
     if (await clickLimitText.isVisible().catch(() => false)) {
       console.log(`🛑 [LinkedIn Daily Limit Reached] You have reached LinkedIn's maximum daily Easy Apply limit for today!`);
@@ -188,13 +314,15 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
             console.log(`💡 Answer: "${aiAnswer}"`);
 
-            const isLocationInput = labelText.toLowerCase().includes('location') || 
-                                    labelText.toLowerCase().includes('city') || 
+            const isLocationInput = labelText.toLowerCase().includes('location') ||
+                                    labelText.toLowerCase().includes('city') ||
                                     ((await input.getAttribute('id').catch(() => '')) || '').includes('city');
 
+            // Human-like typing with variable delay
             await input.focus();
             await input.fill('');
-            await input.pressSequentially(aiAnswer, { delay: 50 });
+            await humanDelay(page, 100, 400);
+            await input.pressSequentially(aiAnswer, { delay: 40 + Math.floor(Math.random() * 40) });
             await page.waitForTimeout(500);
 
             if (isLocationInput) {
@@ -212,13 +340,16 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
               await input.dispatchEvent('change');
               await input.dispatchEvent('blur');
               await input.press('Tab');
-              await page.waitForTimeout(200);
+              await humanDelay(page, 100, 300);
             }
           }
         }
       } catch (aiErr: any) {
         console.error(`⚠️ Input resolution note:`, aiErr.message);
       }
+
+      // Step A2: Cover Letter / Additional Info fields
+      await fillCoverLetterFields(page, activeModal, job);
 
       // Step B: Resolve Standard HTML Select Dropdowns
       try {
@@ -251,14 +382,14 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             await sel.selectOption({ index: matchIndex }).catch(() => null);
             await sel.dispatchEvent('change');
             await sel.dispatchEvent('blur');
-            await page.waitForTimeout(200);
+            await humanDelay(page, 100, 300);
           }
         }
       } catch (selErr) {
         // Soft catch
       }
 
-      // Step C: Resolve Custom ARIA Dropdowns / Comboboxes (e.g. Total years / months of experience)
+      // Step C: Resolve Custom ARIA Dropdowns / Comboboxes
       try {
         const comboTriggers = activeModal.locator('div[role="combobox"], button[aria-label*="Select"], div.fb-dropdown button');
         const comboCount = await comboTriggers.count();
@@ -290,7 +421,6 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         for (let f = 0; f < fsCount; f++) {
           const fs = fieldsets.nth(f);
 
-          // Skip if radio group already has a selection
           const checkedRadio = fs.locator('input[type="radio"]:checked');
           if (await checkedRadio.count() > 0) continue;
 
@@ -347,6 +477,10 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
           console.log(`⚡ Auto-submitting application (Hands-Free Mode)...`);
         }
 
+        // Final human pause before submit click
+        await simulateMouseMovement(page);
+        await humanDelay(page, 800, 1500);
+
         await submitBtn.click();
         await page.waitForTimeout(3000);
 
@@ -361,12 +495,16 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         return 'applied';
       }
 
-      // Step F: Resume / Document selection check
+      // Step F: Resume / Document selection (prefer saved resume, else upload PDF)
       try {
+        // Try selecting already-saved LinkedIn resume first
         const resumeItem = modal.locator('.jobs-document-upload__item, button[aria-label*="Choose Resume"]').first();
         if (await resumeItem.isVisible().catch(() => false)) {
           await resumeItem.click().catch(() => null);
           await page.waitForTimeout(300);
+        } else {
+          // Attempt PDF upload if file input is present
+          await tryUploadResume(page, modal, profile);
         }
       } catch {
         // Soft catch
@@ -375,16 +513,18 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       // Step G: Proceed to next step
       if (await nextBtn.isVisible().catch(() => false)) {
         console.log(`➡️ Step ${step}: Proceeding to next step...`);
-        
-        // Fill phone if present
+
+        // Fill phone if present and empty
         const phoneInput = modal.locator('input[id*="phoneNumber"], input[name*="phone"]').first();
         if (await phoneInput.isVisible().catch(() => false)) {
           const currentVal = await phoneInput.inputValue();
           if (!currentVal) await phoneInput.fill(profile.phone);
         }
 
+        // Human pre-click pause
+        await humanDelay(page, 500, 1200);
         await nextBtn.click();
-        await page.waitForTimeout(2000);
+        await humanDelay(page, 1500, 3000);
 
         // Error recovery check (if required fields blocked progress)
         const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error').first();
@@ -407,8 +547,8 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
                 }
               }
 
-              const isLocationInput = labelText.toLowerCase().includes('location') || 
-                                      labelText.toLowerCase().includes('city') || 
+              const isLocationInput = labelText.toLowerCase().includes('location') ||
+                                      labelText.toLowerCase().includes('city') ||
                                       ((await input.getAttribute('id').catch(() => '')) || '').includes('city');
 
               await input.focus().catch(() => null);
@@ -430,7 +570,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             }
           }
           await nextBtn.click().catch(() => null);
-          await page.waitForTimeout(1500);
+          await humanDelay(page, 1200, 2500);
         }
       } else {
         break;
