@@ -8,6 +8,28 @@ export interface ApplyOptions {
   autoSubmit?: boolean;
 }
 
+async function findVisibleElement(page: Page, selectors: string[], timeoutMs: number = 8000) {
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeoutMs) {
+    for (const selector of selectors) {
+      try {
+        const loc = page.locator(selector);
+        const count = await loc.count();
+        for (let i = 0; i < count; i++) {
+          const el = loc.nth(i);
+          if (await el.isVisible().catch(() => false)) {
+            return el;
+          }
+        }
+      } catch {
+        // Continue to next selector
+      }
+    }
+    await page.waitForTimeout(500);
+  }
+  return null;
+}
+
 export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed';
 
 export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
@@ -32,92 +54,90 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       return 'connection_error';
     }
 
-    // Extract numeric job ID if present for direct logged-in search URL routing
+    // Extract numeric job ID if present
     const jobIdMatch = job.url.match(/(\d{8,12})/);
     const rawJobId = jobIdMatch ? jobIdMatch[1] : null;
 
-    // Use direct search URL format if job ID is known (most reliable in authenticated Chrome session)
+    // Direct /jobs/view/{jobId} URL is the cleanest and fastest way to render single job details on LinkedIn
     const targetUrl = rawJobId 
-      ? `https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`
+      ? `https://www.linkedin.com/jobs/view/${rawJobId}/`
       : job.url;
 
     console.log(`🌐 Navigating to LinkedIn job page: ${targetUrl}`);
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(3000);
 
     // Check auth status
-    const loginBtn = page.locator('a.nav__button-secondary:has-text("Sign in"), button:has-text("Sign in"), a[href*="login"]').first();
-    if (await loginBtn.isVisible().catch(() => false)) {
+    const loginBtn = await findVisibleElement(page, ['a.nav__button-secondary:has-text("Sign in")', 'button:has-text("Sign in")', 'a[href*="login"]'], 1500);
+    if (loginBtn) {
       console.log(`⚠️ LinkedIn is not logged in inside the active Chrome window.`);
       console.log(`👉 Please make sure Chrome (launched via launch-chrome) is logged into https://linkedin.com`);
       return 'not_logged_in';
     }
 
     // Check if already applied
-    const alreadyApplied = page.locator('span:has-text("Applied"), button:has-text("Applied"), .jobs-s-apply span:has-text("Applied")').first();
-    if (await alreadyApplied.isVisible().catch(() => false)) {
+    const alreadyApplied = await findVisibleElement(page, ['span:has-text("Applied")', 'button:has-text("Applied")', '.jobs-s-apply span:has-text("Applied")', '.jobs-post-apply-text'], 1500);
+    if (alreadyApplied) {
       console.log(`ℹ️ Job "${job.title}" at ${job.company} is already applied on LinkedIn.`);
       updateJobStatus(job.external_job_id, 'applied');
       return 'already_applied';
     }
 
-    // Locate "Easy Apply" button with broad selector support
-    const easyApplySelector = [
-      'button.jobs-apply-button',
-      'button.jobs-apply-button--top-card',
+    // Strictly locate visible "Easy Apply" button
+    const easyApplySelectors = [
       'button:has-text("Easy Apply")',
-      'span.artdeco-button__text:has-text("Easy Apply")',
-      '.jobs-s-apply button',
+      'a:has-text("Easy Apply")',
       'button[aria-label*="Easy Apply"]',
-      'button[data-job-id]'
-    ].join(', ');
+      'button.jobs-apply-button:has-text("Easy Apply")',
+      '.jobs-s-apply button',
+      'div.jobs-apply-button--top-card button',
+      'span.artdeco-button__text:has-text("Easy Apply")'
+    ];
 
-    const easyApplyBtn = page.locator(easyApplySelector).first();
+    let easyApplyBtn = await findVisibleElement(page, easyApplySelectors, 6000);
 
-    // Wait up to 5s for the Easy Apply button to appear in case of dynamic rendering
-    let isBtnVisible = false;
-    try {
-      await easyApplyBtn.waitFor({ state: 'visible', timeout: 5000 });
-      isBtnVisible = true;
-    } catch {
-      isBtnVisible = false;
+    if (!easyApplyBtn && rawJobId) {
+      // Fallback check: try search view URL format if direct view didn't render it
+      const searchViewUrl = `https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`;
+      console.log(`🔄 Retrying with search view URL: ${searchViewUrl}`);
+      await page.goto(searchViewUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.waitForTimeout(3000);
+      easyApplyBtn = await findVisibleElement(page, easyApplySelectors, 6000);
     }
 
-    if (!isBtnVisible) {
-      // Fallback check: fallback navigation to direct /jobs/view/ URL if search view didn't render it
-      if (targetUrl !== job.url) {
-        console.log(`🔄 Retrying with original URL: ${job.url}`);
-        await page.goto(job.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForTimeout(4000);
-        try {
-          await easyApplyBtn.waitFor({ state: 'visible', timeout: 5000 });
-          isBtnVisible = true;
-        } catch {
-          isBtnVisible = false;
-        }
-      }
-    }
-
-    if (!isBtnVisible) {
-      console.log(`⏩ "Easy Apply" button not visible (external apply position). Skipping.`);
+    if (!easyApplyBtn) {
+      console.log(`⏩ "Easy Apply" button not visible (likely an external site apply position). Skipping.`);
       updateJobStatus(job.external_job_id, 'skipped');
       return 'skipped';
     }
 
     console.log(`👆 Opening Easy Apply modal dialog...`);
-    await easyApplyBtn.click();
+    try {
+      await easyApplyBtn.click();
+    } catch {
+      await easyApplyBtn.click({ force: true }).catch(() => null);
+    }
     await page.waitForTimeout(2500);
+
+    // Verify modal dialog actually opened
+    const modal = await findVisibleElement(page, ['div[role="dialog"]', 'div.artdeco-modal', 'div.jobs-easy-apply-content'], 6000);
+
+    if (!modal) {
+      console.log(`⚠️ Easy Apply modal dialog did not open after click. Skipping.`);
+      updateJobStatus(job.external_job_id, 'skipped');
+      return 'skipped';
+    }
 
     // Multi-step modal loop (Max 6 steps)
     for (let step = 1; step <= 6; step++) {
-      const modal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-content').first();
+      const activeModal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-content').first();
 
       const nextBtn = page.locator('button:has-text("Next"), button:has-text("Review")').first();
       const submitBtn = page.locator('button:has-text("Submit application")').first();
 
       // Step A: Fill ALL text, numeric, and textarea inputs inside modal with real keypresses
       try {
-        const textInputs = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
+        const textInputs = activeModal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
         const inputCount = await textInputs.count();
 
         for (let j = 0; j < inputCount; j++) {
@@ -162,7 +182,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
       // Step B: Resolve Standard HTML Select Dropdowns
       try {
-        const selects = modal.locator('select');
+        const selects = activeModal.locator('select');
         const selCount = await selects.count();
 
         for (let s = 0; s < selCount; s++) {
@@ -200,7 +220,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
       // Step C: Resolve Custom ARIA Dropdowns / Comboboxes (e.g. Total years / months of experience)
       try {
-        const comboTriggers = modal.locator('div[role="combobox"], button[aria-label*="Select"], div.fb-dropdown button');
+        const comboTriggers = activeModal.locator('div[role="combobox"], button[aria-label*="Select"], div.fb-dropdown button');
         const comboCount = await comboTriggers.count();
 
         for (let cb = 0; cb < comboCount; cb++) {
@@ -222,18 +242,29 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         // Soft catch
       }
 
-      // Step D: Resolve Radio Questions (e.g. "Are you comfortable commuting?", "Are you in Pune?")
+      // Step D: Resolve Radio Questions with smart fallbacks
       try {
-        const fieldsets = modal.locator('fieldset, div.fb-radio, div.fb-form-element');
+        const fieldsets = activeModal.locator('fieldset, div.fb-radio, div.fb-form-element, div[role="radiogroup"]');
         const fsCount = await fieldsets.count();
 
         for (let f = 0; f < fsCount; f++) {
           const fs = fieldsets.nth(f);
+
+          // Skip if radio group already has a selection
+          const checkedRadio = fs.locator('input[type="radio"]:checked');
+          if (await checkedRadio.count() > 0) continue;
+
           const yesOption = fs.locator('label:has-text("Yes"), input[value="Yes"], span:has-text("Yes")').first();
 
           if (await yesOption.isVisible().catch(() => false)) {
             await yesOption.click().catch(() => null);
             await page.waitForTimeout(300);
+          } else {
+            const firstRadioLabel = fs.locator('label, input[type="radio"]').first();
+            if (await firstRadioLabel.isVisible().catch(() => false)) {
+              await firstRadioLabel.click().catch(() => null);
+              await page.waitForTimeout(300);
+            }
           }
         }
       } catch (radioErr) {
@@ -243,6 +274,19 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       // Step E: Final Submit Step Check
       if (await submitBtn.isVisible().catch(() => false)) {
         console.log(`📌 Reached final Review & Submit step!`);
+
+        // Uncheck "Follow company" to keep user feed clean
+        try {
+          const followCheckbox = modal.locator('input[type="checkbox"][id*="follow-company"], label:has-text("Follow") input[type="checkbox"]').first();
+          if (await followCheckbox.isVisible().catch(() => false)) {
+            if (await followCheckbox.isChecked().catch(() => false)) {
+              console.log(`🧹 Unchecking "Follow company" checkbox...`);
+              await followCheckbox.uncheck({ force: true }).catch(() => null);
+            }
+          }
+        } catch {
+          // Soft catch
+        }
 
         if (!options.autoSubmit) {
           const answer = await inquirer.prompt<{ confirmSubmit: boolean }>([
@@ -277,7 +321,18 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         return 'applied';
       }
 
-      // Step F: Proceed to next step
+      // Step F: Resume / Document selection check
+      try {
+        const resumeItem = modal.locator('.jobs-document-upload__item, button[aria-label*="Choose Resume"]').first();
+        if (await resumeItem.isVisible().catch(() => false)) {
+          await resumeItem.click().catch(() => null);
+          await page.waitForTimeout(300);
+        }
+      } catch {
+        // Soft catch
+      }
+
+      // Step G: Proceed to next step
       if (await nextBtn.isVisible().catch(() => false)) {
         console.log(`➡️ Step ${step}: Proceeding to next step...`);
         
@@ -290,6 +345,26 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
         await nextBtn.click();
         await page.waitForTimeout(2000);
+
+        // Error recovery check (if required fields blocked progress)
+        const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error').first();
+        if (await errorFeedback.isVisible().catch(() => false)) {
+          console.log(`⚠️ Form field validation warning detected. Resolving remaining inputs with profile data...`);
+          const emptyInputs = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
+          const empCount = await emptyInputs.count();
+          for (let e = 0; e < empCount; e++) {
+            const input = emptyInputs.nth(e);
+            const val = await input.inputValue().catch(() => '');
+            if (!val || val.trim() === '') {
+              let labelText = (await input.getAttribute('aria-label').catch(() => '')) ||
+                              (await input.getAttribute('name').catch(() => '')) || 'Years of experience';
+              const cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
+              await input.fill(cleanAnswer).catch(() => null);
+            }
+          }
+          await nextBtn.click().catch(() => null);
+          await page.waitForTimeout(1500);
+        }
       } else {
         break;
       }

@@ -112,22 +112,44 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
   const profile = loadProfile();
   const qLower = questionText.toLowerCase().trim();
 
-  // 1. Check persistent Answers Knowledge Base (answers.json)
+  // 1. Direct Pattern Matching for Standard Candidate Contact & Profile Information
+  if (qLower.includes('first name') || qLower.includes('given name')) {
+    const firstName = profile.name.split(' ')[0] || 'Mohammad';
+    return firstName;
+  }
+  if (qLower.includes('last name') || qLower.includes('surname') || qLower.includes('family name')) {
+    const lastName = profile.name.split(' ').slice(1).join(' ') || 'Zuber';
+    return lastName;
+  }
+  if (qLower.includes('full name') || qLower === 'name') {
+    return profile.name;
+  }
+  if (qLower.includes('phone') || qLower.includes('mobile') || qLower.includes('contact number')) {
+    return profile.phone;
+  }
+  if (qLower.includes('email') || qLower.includes('e-mail')) {
+    return profile.email;
+  }
+  if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
+    return 'India';
+  }
+
+  // 2. Check persistent Answers Knowledge Base (answers.json)
   const cache = loadAnswersCache();
   if (cache[qLower]) {
     console.log(`🧠 [Knowledge Base Hit] "${questionText}" ➔ "${cache[qLower]}"`);
     return cache[qLower];
   }
 
-  // Check fuzzy key match in cache
+  // Check fuzzy key match in cache (only if key length >= 5 to prevent short word mismatches like 'name')
   for (const [key, val] of Object.entries(cache)) {
-    if (qLower.includes(key) || key.includes(qLower)) {
-      console.log(`🧠 [Knowledge Base Fuzzy Match] "${questionText}" ➔ "${val}"`);
+    if (key.length >= 5 && qLower.includes(key)) {
+      console.log(`🧠 [Knowledge Base Match] "${questionText}" ➔ "${val}"`);
       return val;
     }
   }
 
-  // 2. Pattern Matching for Standard Profile Metrics
+  // 3. Pattern Matching for Standard Technical & Financial Metrics
   let computedAnswer = '';
 
   if (qLower.includes('in inr') || qLower.includes('compensation in inr') || qLower.includes('annual ctc in inr')) {
@@ -141,13 +163,13 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
   } else if (qLower.includes('java') && !qLower.includes('javascript')) {
     computedAnswer = '0';
   } else if (qLower.includes('angular') || qLower.includes('angularjs') || qLower.includes('rxjs') || qLower.includes('typescript')) {
-    computedAnswer = Math.floor(profile.totalYoe).toString(); // 2
+    computedAnswer = profile.totalYoe.toString(); // 2.5
   } else if (qLower.includes('sponsorship') || qLower.includes('visa')) {
     computedAnswer = 'No';
   } else if (qLower.includes('authorized') || qLower.includes('legally authorized') || qLower.includes('commuting') || qLower.includes('pune')) {
     computedAnswer = 'Yes';
   } else if (qLower.includes('experience') || qLower.includes('years') || qLower.includes('yoe')) {
-    computedAnswer = Math.floor(profile.totalYoe).toString(); // 2
+    computedAnswer = profile.totalYoe.toString(); // 2.5
   }
 
   if (computedAnswer) {

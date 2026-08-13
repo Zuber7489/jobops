@@ -1,5 +1,6 @@
-import { chromium } from 'playwright';
+import { chromium, BrowserContext, Page } from 'playwright';
 import { saveJobRecord, JobRecord } from '../db/schema';
+import { CONFIG } from '../config';
 
 export interface LinkedInScanOptions {
   query: string;
@@ -18,20 +19,39 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
   // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types)
   const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=2,3`;
 
-  const browser = await chromium.launch({
-    headless,
-    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
-  });
+  let browserContext: BrowserContext | null = null;
+  let standaloneBrowser: any = null;
+  let page: Page | null = null;
+  let isCdpSession = false;
 
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    viewport: { width: 1280, height: 800 }
-  });
-
-  const page = await context.newPage();
   const scrapedJobs: JobRecord[] = [];
 
   try {
+    // Try connecting to active logged-in Chrome session first
+    try {
+      const browser = await chromium.connectOverCDP(`http://localhost:${CONFIG.cdpPort}`);
+      browserContext = browser.contexts()[0] || await browser.newContext();
+      page = await browserContext.newPage();
+      isCdpSession = true;
+      console.log(`✅ [LinkedIn Scanner] Using active Chrome session on CDP port ${CONFIG.cdpPort}`);
+    } catch {
+      standaloneBrowser = await chromium.launch({
+        headless,
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
+      });
+      browserContext = await standaloneBrowser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        viewport: { width: 1280, height: 800 }
+      });
+      if (browserContext) page = await browserContext.newPage();
+      console.log(`🌐 [LinkedIn Scanner] Running in standalone web browser context`);
+    }
+
+    if (!page) {
+      console.error(`❌ Unable to create browser page.`);
+      return [];
+    }
+
     for (let pageNum = 0; pageNum < maxPages; pageNum++) {
       const pageUrl = `${baseUrl}&start=${pageNum * 25}`;
       console.log(`🌐 Navigating to LinkedIn Page ${pageNum + 1}: ${pageUrl}`);
@@ -40,7 +60,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       await page.waitForTimeout(3000 + Math.random() * 2000);
 
       // Select job card containers
-      const jobCards = page.locator('ul.jobs-search__results-list > li, div.base-card, div.job-search-card');
+      const jobCards = page.locator('ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
       const count = await jobCards.count();
 
       console.log(`📌 Found ${count} job cards on Page ${pageNum + 1}`);
@@ -50,9 +70,19 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
         break;
       }
 
+      let savedCount = 0;
       for (let i = 0; i < count; i++) {
         try {
           const card = jobCards.nth(i);
+          const cardText = (await card.textContent().catch(() => '')) || '';
+
+          // Strict check: In public guest mode, verify the card actually has the "Easy Apply" badge
+          if (!isCdpSession) {
+            const hasEasyApplyTag = cardText.includes('Easy Apply') || (await card.locator('*:has-text("Easy Apply")').count()) > 0;
+            if (!hasEasyApplyTag) {
+              continue; // Skip non-Easy-Apply positions during scan
+            }
+          }
 
           // Extract link & URL
           const linkEl = card.locator('a.base-card__full-link, a.job-card-container__link, a[href*="/jobs/view/"]').first();
@@ -99,17 +129,24 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
 
           saveJobRecord(jobRecord);
           scrapedJobs.push(jobRecord as JobRecord);
-        } catch (cardErr: any) {
-          console.error(`⚠️ Card #${i + 1} extraction error:`, cardErr.message);
+          savedCount++;
+        } catch {
+          // Soft catch card parsing errors
         }
       }
+
+      console.log(`✅ Saved ${savedCount} confirmed Easy Apply jobs from Page ${pageNum + 1}`);
     }
   } catch (err: any) {
     console.error(`❌ [LinkedIn Scanner Error]: ${err.message}`);
   } finally {
-    await browser.close();
+    if (page && isCdpSession) {
+      await page.close().catch(() => null);
+    } else if (standaloneBrowser) {
+      await standaloneBrowser.close().catch(() => null);
+    }
   }
 
-  console.log(`✅ [LinkedIn Scanner Completed] Successfully saved ${scrapedJobs.length} Hybrid/Remote jobs to database.`);
+  console.log(`\n🎉 [LinkedIn Scanner Completed] Saved ${scrapedJobs.length} confirmed Easy Apply jobs to database.`);
   return scrapedJobs;
 }
