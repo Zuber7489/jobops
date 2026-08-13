@@ -163,17 +163,43 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             labelText = labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
 
             console.log(`❓ Question: "${labelText}"`);
-            const aiAnswer = await answerQuestionWithGemini(labelText, job.title);
+            let aiAnswer = await answerQuestionWithGemini(labelText, job.title);
+
+            const inputType = (await input.getAttribute('type').catch(() => '')) || '';
+            if (inputType === 'number' || labelText.toLowerCase().includes('year') || labelText.toLowerCase().includes('experience')) {
+              if (aiAnswer.includes('.')) {
+                aiAnswer = Math.round(parseFloat(aiAnswer) || 2).toString();
+              }
+            }
+
             console.log(`💡 Answer: "${aiAnswer}"`);
+
+            const isLocationInput = labelText.toLowerCase().includes('location') || 
+                                    labelText.toLowerCase().includes('city') || 
+                                    ((await input.getAttribute('id').catch(() => '')) || '').includes('city');
 
             await input.focus();
             await input.fill('');
-            await input.pressSequentially(aiAnswer, { delay: 30 });
-            await input.dispatchEvent('input');
-            await input.dispatchEvent('change');
-            await input.dispatchEvent('blur');
-            await input.press('Tab');
-            await page.waitForTimeout(200);
+            await input.pressSequentially(aiAnswer, { delay: 50 });
+            await page.waitForTimeout(500);
+
+            if (isLocationInput) {
+              const typeaheadHit = page.locator('li[role="option"], div[role="option"], div.basic-typeahead__results li, .search-typeahead-v2__hit').first();
+              if (await typeaheadHit.isVisible().catch(() => false)) {
+                await typeaheadHit.click().catch(() => null);
+              } else {
+                await input.press('ArrowDown').catch(() => null);
+                await page.waitForTimeout(200);
+                await input.press('Enter').catch(() => null);
+              }
+              await page.waitForTimeout(300);
+            } else {
+              await input.dispatchEvent('input');
+              await input.dispatchEvent('change');
+              await input.dispatchEvent('blur');
+              await input.press('Tab');
+              await page.waitForTimeout(200);
+            }
           }
         }
       } catch (aiErr: any) {
@@ -358,8 +384,35 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             if (!val || val.trim() === '') {
               let labelText = (await input.getAttribute('aria-label').catch(() => '')) ||
                               (await input.getAttribute('name').catch(() => '')) || 'Years of experience';
-              const cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
-              await input.fill(cleanAnswer).catch(() => null);
+              let cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
+
+              const inputType = (await input.getAttribute('type').catch(() => '')) || '';
+              if (inputType === 'number' || labelText.toLowerCase().includes('year') || labelText.toLowerCase().includes('experience')) {
+                if (cleanAnswer.includes('.')) {
+                  cleanAnswer = Math.round(parseFloat(cleanAnswer) || 2).toString();
+                }
+              }
+
+              const isLocationInput = labelText.toLowerCase().includes('location') || 
+                                      labelText.toLowerCase().includes('city') || 
+                                      ((await input.getAttribute('id').catch(() => '')) || '').includes('city');
+
+              await input.focus().catch(() => null);
+              await input.fill('').catch(() => null);
+              await input.pressSequentially(cleanAnswer, { delay: 50 }).catch(() => null);
+              await page.waitForTimeout(500);
+
+              if (isLocationInput) {
+                const typeaheadHit = page.locator('li[role="option"], div[role="option"], div.basic-typeahead__results li, .search-typeahead-v2__hit').first();
+                if (await typeaheadHit.isVisible().catch(() => false)) {
+                  await typeaheadHit.click().catch(() => null);
+                } else {
+                  await input.press('ArrowDown').catch(() => null);
+                  await page.waitForTimeout(200);
+                  await input.press('Enter').catch(() => null);
+                }
+                await page.waitForTimeout(300);
+              }
             }
           }
           await nextBtn.click().catch(() => null);

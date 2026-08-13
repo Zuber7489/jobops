@@ -112,14 +112,12 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
   const profile = loadProfile();
   const qLower = questionText.toLowerCase().trim();
 
-  // 1. Direct Pattern Matching for Standard Candidate Contact & Profile Information
+  // 1. Exact Contact & Standard Metric Direct Mappings
   if (qLower.includes('first name') || qLower.includes('given name')) {
-    const firstName = profile.name.split(' ')[0] || 'Mohammad';
-    return firstName;
+    return profile.name.split(' ')[0] || 'Mohammad';
   }
   if (qLower.includes('last name') || qLower.includes('surname') || qLower.includes('family name')) {
-    const lastName = profile.name.split(' ').slice(1).join(' ') || 'Zuber';
-    return lastName;
+    return profile.name.split(' ').slice(1).join(' ') || 'Zuber';
   }
   if (qLower.includes('full name') || qLower === 'name') {
     return profile.name;
@@ -131,103 +129,103 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     return profile.email;
   }
   if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
-    return 'India';
+    return 'Pune';
   }
 
-  // 2. Check persistent Answers Knowledge Base (answers.json)
+  // Current Compensation / CTC / Salary / Package
+  if (qLower.includes('current') || qLower.includes('present') || qLower.includes('existing')) {
+    if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
+      if (qLower.includes('lpa') || qLower.includes('lakh')) {
+        return profile.currentCtcLpa.toString(); // 3.2
+      }
+      return (profile.currentCtcLpa * 100000).toString(); // 320000
+    }
+  }
+
+  // Expected Compensation / CTC / Salary / Package
+  if (qLower.includes('expected') || qLower.includes('desired') || qLower.includes('requirement')) {
+    if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
+      if (qLower.includes('lpa') || qLower.includes('lakh')) {
+        return profile.expectedCtcLpa.toString(); // 6.5
+      }
+      return (profile.expectedCtcLpa * 100000).toString(); // 650000
+    }
+  }
+
+  if (qLower.includes('notice period') || qLower.includes('how soon can you join') || qLower.includes('start date')) {
+    return profile.noticePeriodDays.toString(); // 15
+  }
+
+  // 2. Check persistent Answers Knowledge Base (answers.json) for exact match
   const cache = loadAnswersCache();
   if (cache[qLower]) {
     console.log(`🧠 [Knowledge Base Hit] "${questionText}" ➔ "${cache[qLower]}"`);
     return cache[qLower];
   }
 
-  // Check fuzzy key match in cache (only if key length >= 5 to prevent short word mismatches like 'name')
-  for (const [key, val] of Object.entries(cache)) {
-    if (key.length >= 5 && qLower.includes(key)) {
-      console.log(`🧠 [Knowledge Base Match] "${questionText}" ➔ "${val}"`);
-      return val;
-    }
-  }
-
-  // 3. Pattern Matching for Standard Technical & Financial Metrics
-  let computedAnswer = '';
-
-  if (qLower.includes('in inr') || qLower.includes('compensation in inr') || qLower.includes('annual ctc in inr')) {
-    computedAnswer = (profile.expectedCtcLpa * 100000).toString(); // e.g. 650000
-  } else if (qLower.includes('current annual ctc') || qLower.includes('current ctc') || qLower.includes('present ctc')) {
-    computedAnswer = profile.currentCtcLpa.toString(); // 3.2
-  } else if (qLower.includes('expected annual ctc') || qLower.includes('expected ctc') || qLower.includes('salary expectation')) {
-    computedAnswer = profile.expectedCtcLpa.toString(); // 6.5
-  } else if (qLower.includes('notice period') || qLower.includes('how soon can you join') || qLower.includes('start date')) {
-    computedAnswer = profile.noticePeriodDays.toString(); // 15
-  } else if (qLower.includes('java') && !qLower.includes('javascript')) {
-    computedAnswer = '0';
-  } else if (qLower.includes('angular') || qLower.includes('angularjs') || qLower.includes('rxjs') || qLower.includes('typescript')) {
-    computedAnswer = profile.totalYoe.toString(); // 2.5
-  } else if (qLower.includes('sponsorship') || qLower.includes('visa')) {
-    computedAnswer = 'No';
-  } else if (qLower.includes('authorized') || qLower.includes('legally authorized') || qLower.includes('commuting') || qLower.includes('pune')) {
-    computedAnswer = 'Yes';
-  } else if (qLower.includes('experience') || qLower.includes('years') || qLower.includes('yoe')) {
-    computedAnswer = profile.totalYoe.toString(); // 2.5
-  }
-
-  if (computedAnswer) {
-    saveAnswerToCache(questionText, computedAnswer);
-    return computedAnswer;
-  }
-
-  // 3. Fallback to Gemini AI Generation & persist result
+  // 3. Dynamic Gemini AI Reasoning Engine for ALL skill, custom, and new questions
   const client = getGeminiClient();
-  if (!client) {
-    computedAnswer = Math.floor(profile.totalYoe).toString();
-    saveAnswerToCache(questionText, computedAnswer);
-    return computedAnswer;
-  }
+  let aiAnswer = '';
 
-  try {
-    const cvPath = path.join(process.cwd(), 'cv.md');
-    const cvText = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : JSON.stringify(profile);
+  if (client) {
+    try {
+      const cvPath = path.join(process.cwd(), 'cv.md');
+      const cvText = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : JSON.stringify(profile);
 
-    const model = getBestModel(client);
+      const model = getBestModel(client);
 
-    const prompt = `
-You are an AI assistant completing a job application question for ${profile.name} applying for "${jobTitle}".
+      const prompt = `
+You are an expert AI Job Application Assistant reasoning on behalf of candidate ${profile.name} applying for "${jobTitle}".
 
-Candidate Resume & Details:
+Candidate Resume & Detailed Background:
 ${cvText}
-Notice Period: ${profile.noticePeriodDays} days
-Total YOE: ${profile.totalYoe} years
-Current CTC: ${profile.currentCtcLpa} LPA
-Expected CTC: ${profile.expectedCtcLpa} LPA
-Location: ${profile.location}
 
-Question:
+Candidate Core Profile:
+- Full Name: ${profile.name}
+- Email: ${profile.email}
+- Phone: ${profile.phone}
+- Location: ${profile.location}
+- Notice Period: ${profile.noticePeriodDays} days
+- Total Professional Experience: ${Math.round(profile.totalYoe)} years
+- Relevant Angular/Frontend Experience: 2 years
+- Current Salary / CTC: 3.2 LPA (320000 INR)
+- Expected Salary / CTC: 6.5 LPA (650000 INR)
+
+Question asked on application form:
 "${questionText}"
 
-Task:
-Provide a clean numeric or 1-word answer (e.g., 2, 3.2, 6.5, 650000, 15, Yes, No).
-Output ONLY the final answer value.
+Instructions & Response Rules:
+1. Read the candidate's resume carefully.
+2. If the question asks for years of experience with a skill (e.g. Angular, Node.js, RxJS, MEAN stack, HTML, CSS):
+   - Output 2 if candidate has experience with that skill in their resume.
+   - Output 0 if candidate does NOT have experience with that skill in their resume (e.g. Java, Python, C++, Go, D3.js).
+3. If the question is a Yes/No question (e.g. "Are you comfortable commuting?", "Are you authorized to work?"):
+   - Output Yes or No based on reasonable candidate interest.
+4. Output ONLY the concise final answer string value (e.g., 2, 0, 15, 320000, 650000, Yes, No). No sentences or markdown formatting.
 `;
 
-    let text = '';
-    try {
       const result = await model.generateContent(prompt);
-      text = result.response.text();
-    } catch (modelErr: any) {
-      if (modelErr.message && modelErr.message.includes('429')) {
-        await new Promise(r => setTimeout(r, 6000));
-        const retryResult = await model.generateContent(prompt).catch(() => null);
-        if (retryResult) text = retryResult.response.text();
-      }
+      const rawText = result.response.text();
+      aiAnswer = rawText ? rawText.trim().replace(/^["']|["']$/g, '') : '';
+      console.log(`🤖 [Gemini AI Reasoned] "${questionText}" ➔ "${aiAnswer}"`);
+    } catch (aiErr: any) {
+      console.error(`⚠️ [Gemini AI Reasoning Note]: ${aiErr.message}`);
     }
-
-    computedAnswer = text ? text.trim().replace(/^["']|["']$/g, '') : Math.floor(profile.totalYoe).toString();
-    saveAnswerToCache(questionText, computedAnswer);
-    return computedAnswer;
-  } catch (err: any) {
-    computedAnswer = Math.floor(profile.totalYoe).toString();
-    saveAnswerToCache(questionText, computedAnswer);
-    return computedAnswer;
   }
+
+  // Fallback if Gemini AI client unavailable
+  if (!aiAnswer) {
+    if (qLower.includes('java') && !qLower.includes('javascript')) {
+      aiAnswer = '0';
+    } else if (qLower.includes('sponsorship') || qLower.includes('visa')) {
+      aiAnswer = 'No';
+    } else if (qLower.includes('authorized') || qLower.includes('commuting') || qLower.includes('pune')) {
+      aiAnswer = 'Yes';
+    } else {
+      aiAnswer = Math.round(profile.totalYoe).toString();
+    }
+  }
+
+  saveAnswerToCache(questionText, aiAnswer);
+  return aiAnswer;
 }
