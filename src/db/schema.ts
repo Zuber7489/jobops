@@ -48,6 +48,18 @@ function initDb(db: Database.Database) {
       applied_at DATETIME
     );
   `);
+import fs from 'fs';
+import path from 'path';
+
+export function exportJobsToJson() {
+  try {
+    const db = getDb();
+    const allJobs = db.prepare(`SELECT * FROM jobs ORDER BY id DESC`).all();
+    const jsonPath = path.join(process.cwd(), 'public', 'jobs.json');
+    fs.writeFileSync(jsonPath, JSON.stringify(allJobs, null, 2));
+  } catch {
+    // Soft catch
+  }
 }
 
 export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number {
@@ -71,8 +83,9 @@ export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number
 
   const info = stmt.run(recordToInsert);
 
-  // Cloud sync to Supabase in background
+  // Cloud sync to Supabase & static JSON export for Netlify live app
   syncJobToSupabase(recordToInsert).catch(() => null);
+  exportJobsToJson();
 
   return info.lastInsertRowid as number;
 }
@@ -99,4 +112,5 @@ export function updateJobStatus(externalJobId: string, status: JobRecord['status
   if (updatedJob) {
     syncJobToSupabase(updatedJob).catch(() => null);
   }
+  exportJobsToJson();
 }

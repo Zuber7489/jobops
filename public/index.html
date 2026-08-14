@@ -1174,9 +1174,20 @@
           }
 
           loadAnswers();
-        } else if (supabaseClient) {
-          // Cloud Supabase Direct Fallback (For Netlify deployed web app)
-          const { data: jobs, error } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false }).catch(() => ({ data: null }));
+        } else {
+          // Cloud Direct Fallback for Netlify hosted web app (loads public/jobs.json)
+          let jobs = null;
+          if (supabaseClient) {
+            const { data } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false }).catch(() => ({ data: null }));
+            jobs = data;
+          }
+          if (!jobs || jobs.length === 0) {
+            const fallbackRes = await fetch('./jobs.json').catch(() => null);
+            if (fallbackRes && fallbackRes.ok) {
+              jobs = await fallbackRes.json();
+            }
+          }
+
           if (jobs && jobs.length > 0) {
             allJobs = jobs;
             const totalScanned = jobs.length;
@@ -1191,7 +1202,7 @@
 
             filterJobs();
           } else {
-            showToast('Ready — Run scan from localhost:3000 or configure Supabase table', 'info');
+            showToast('Ready — Run scan from localhost:3000', 'info');
           }
         }
       } catch (err) {
