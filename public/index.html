@@ -1167,8 +1167,8 @@
           loadAnswers();
         } else if (supabaseClient) {
           // Cloud Supabase Direct Fallback (For Netlify deployed web app)
-          const { data: jobs, error } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false });
-          if (jobs) {
+          const { data: jobs, error } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false }).catch(() => ({ data: null }));
+          if (jobs && jobs.length > 0) {
             allJobs = jobs;
             const totalScanned = jobs.length;
             const topMatches = jobs.filter(j => (j.score || 0) >= 2.5).length;
@@ -1181,10 +1181,12 @@
             document.getElementById('stat-avg-score').innerText = avgScore.toFixed(1);
 
             filterJobs();
+          } else {
+            showToast('Ready — Run scan from localhost:3000 or configure Supabase table', 'info');
           }
         }
       } catch (err) {
-        showToast('Connected to JobOps UI', 'info');
+        showToast('Ready — Run scan from localhost:3000', 'info');
       }
     }
 
