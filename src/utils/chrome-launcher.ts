@@ -40,34 +40,35 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
   }
 
   const chromePath = findChromePath();
-  const userDataDir = path.join(process.cwd(), '.chrome-user-data');
+  const userDataDir = path.resolve(process.cwd(), 'chrome_debug_profile');
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }
 
-  console.log(`🚀 [Chrome Launcher] Opening visible Chrome window on port ${port}...`);
+  console.log(`🚀 [Chrome Launcher] Opening visible Chrome browser on port ${port}...`);
 
   try {
     if (chromePath) {
       spawn(chromePath, [
         `--remote-debugging-port=${port}`,
         `--user-data-dir=${userDataDir}`,
+        '--no-first-run',
+        '--no-default-browser-check',
         '--start-maximized',
-        '--new-window',
         'https://www.linkedin.com'
       ], { detached: true, stdio: 'ignore' }).unref();
     } else {
       await chromium.launchPersistentContext(userDataDir, {
         headless: false,
-        args: [`--remote-debugging-port=${port}`, '--start-maximized'],
+        args: [`--remote-debugging-port=${port}`, '--no-first-run', '--start-maximized'],
         viewport: null
       });
     }
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       await new Promise(r => setTimeout(r, 500));
       if (await isChromeCdpRunning(port)) {
-        console.log(`✅ [Chrome Launcher] Visible Chrome window opened on port ${port}`);
+        console.log(`✅ [Chrome Launcher] Visible Chrome window active on port ${port}`);
         return true;
       }
     }

@@ -162,15 +162,19 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     // Connect to existing logged-in Chrome session via CDP
     try {
       console.log(`🔌 Connecting to active Chrome session on CDP port ${CONFIG.cdpPort}...`);
-      const browser = await chromium.connectOverCDP(`http://localhost:${CONFIG.cdpPort}`);
+      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
       browserContext = browser.contexts()[0] || await browser.newContext();
       page = await browserContext.newPage();
       console.log(`✅ Connected to active Chrome session!`);
       await page.bringToFront().catch(() => null);
     } catch (cdpErr) {
-      console.log(`\n❌ [Connection Required] Active Chrome browser session not found on CDP port ${CONFIG.cdpPort}.`);
-      console.log(`👉 Please run: npx ts-node src/index.ts launch-chrome\n`);
-      return 'connection_error';
+      console.log(`🌐 CDP session not detected. Launching visible browser window for auto-apply...`);
+      const standaloneBrowser = await chromium.launch({
+        headless: false,
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized']
+      });
+      browserContext = await standaloneBrowser.newContext({ viewport: null });
+      page = await browserContext.newPage();
     }
 
     // Extract numeric job ID if present

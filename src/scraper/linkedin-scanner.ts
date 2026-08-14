@@ -31,20 +31,21 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
   try {
     // Try connecting to active logged-in Chrome session first (preferred — uses your real session)
     try {
-      const browser = await chromium.connectOverCDP(`http://localhost:${CONFIG.cdpPort}`);
+      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
       browserContext = browser.contexts()[0] || await browser.newContext();
       page = await browserContext.newPage();
       isCdpSession = true;
       console.log(`✅ [LinkedIn Scanner] Using active Chrome session on CDP port ${CONFIG.cdpPort}`);
       await page.bringToFront().catch(() => null);
     } catch {
+      console.log(`🌐 [LinkedIn Scanner] Opening visible browser window for job scan...`);
       standaloneBrowser = await chromium.launch({
-        headless,
-        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
+        headless: false,
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized']
       });
       browserContext = await standaloneBrowser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        viewport: { width: 1280, height: 800 }
+        viewport: null
       });
       if (browserContext) page = await browserContext.newPage();
       console.log(`🌐 [LinkedIn Scanner] Running in standalone web browser context`);
