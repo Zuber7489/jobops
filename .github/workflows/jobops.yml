@@ -1,0 +1,44 @@
+name: JobOps Automated Daily Scanner & AI Matcher
+
+on:
+  schedule:
+    # Runs daily at 03:30 UTC (9:00 AM IST)
+    - cron: '30 3 * * *'
+  workflow_dispatch: # Allows 1-click manual trigger from GitHub UI anytime
+
+jobs:
+  jobops-automation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers & System Dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Step 1 — Scan 24-Hour LinkedIn Easy Apply Jobs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 3
+
+      - name: Step 2 — AI Job Match Evaluator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: npx ts-node src/index.ts evaluate
