@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
 
+import { CONFIG } from '../config';
+
 export function isChromeCdpRunning(port: number = 9222): Promise<boolean> {
   return new Promise((resolve) => {
     const req = http.get(`http://127.0.0.1:${port}/json/version`, (res) => {
@@ -40,7 +42,7 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
   }
 
   const chromePath = findChromePath();
-  const userDataDir = path.resolve(process.cwd(), 'chrome_debug_profile');
+  const userDataDir = CONFIG.userDataDir;
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }

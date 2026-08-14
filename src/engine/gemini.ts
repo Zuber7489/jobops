@@ -201,6 +201,20 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     return Math.floor(profile.totalYoe).toString(); // 2
   }
 
+  // College / Education / Degree Start & End Dates
+  if (qLower.includes('college') || qLower.includes('degree') || qLower.includes('education') || qLower.includes('school')) {
+    if (qLower.includes('start') || qLower.includes('from')) {
+      if (qLower.includes('month')) return 'June';
+      if (qLower.includes('year')) return '2020';
+      return 'June 2020';
+    }
+    if (qLower.includes('end') || qLower.includes('to') || qLower.includes('graduation')) {
+      if (qLower.includes('month')) return 'June';
+      if (qLower.includes('year')) return '2024';
+      return 'June 2024';
+    }
+  }
+
   // 2. Check persistent Answers Knowledge Base (answers.json) for exact match
   const cache = loadAnswersCache();
   if (cache[qLower]) {

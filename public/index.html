@@ -179,6 +179,70 @@
       transform: translateY(-2px);
     }
 
+    /* Search & Filter Customization Panel */
+    .filter-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .filter-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-group label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-control {
+      width: 100%;
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: #FFFFFF;
+      color: var(--text-main);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .filter-control:focus {
+      outline: none;
+      border-color: #000000;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+    }
+
     /* Action Trigger Workflow Bar */
     .pipeline-bar {
       display: flex;
@@ -807,7 +871,7 @@
         <button class="btn btn-secondary" onclick="openProfileModal()">
           <i class="fa-solid fa-user-gear"></i> Configure Candidate
         </button>
-        <button class="btn btn-primary" onclick="runAction('/api/run-all')">
+        <button class="btn btn-primary" onclick="triggerRunAll()">
           <i class="fa-solid fa-bolt"></i> Run Full Pipeline
         </button>
         <button class="btn" style="background: #EF4444; color: #FFFFFF; font-weight: 700;" onclick="runAction('/api/stop')">
@@ -815,6 +879,91 @@
         </button>
       </div>
     </header>
+
+    <!-- Customizable Search & Automation Filters Panel -->
+    <div class="filter-panel">
+      <div class="filter-header">
+        <div class="filter-title">
+          <i class="fa-solid fa-filter" style="color: #6366F1;"></i>
+          LinkedIn Job Search & Filter Customization
+        </div>
+        <span class="status-badge" style="background: #EEF2FF; color: #4F46E5; font-size: 11px;">
+          <i class="fa-solid fa-sliders"></i> Customizable Controls
+        </span>
+      </div>
+
+      <div class="filter-grid">
+        <!-- 1. Job Title Query -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-magnifying-glass"></i> Job Title / Query</label>
+          <input type="text" id="filter-query" class="filter-control" value="Angular Developer" placeholder="e.g. Angular Developer, React, Python">
+        </div>
+
+        <!-- 2. Country / Location Selection -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-globe"></i> Country / Location</label>
+          <select id="filter-location-select" class="filter-control" onchange="toggleCustomLocationInput()">
+            <option value="India" selected>🇮🇳 India</option>
+            <option value="United States">🇺🇸 United States</option>
+            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+            <option value="Canada">🇨🇦 Canada</option>
+            <option value="Germany">🇩🇪 Germany</option>
+            <option value="Australia">🇦🇺 Australia</option>
+            <option value="United Arab Emirates">🇦🇪 UAE</option>
+            <option value="Europe">🇪🇺 Europe</option>
+            <option value="Worldwide">🌐 Worldwide / Remote</option>
+            <option value="custom">✍️ Custom Location...</option>
+          </select>
+          <input type="text" id="filter-location-custom" class="filter-control" placeholder="Type city or country..." style="display: none; margin-top: 4px;">
+        </div>
+
+        <!-- 3. Time Posted Filter -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-clock"></i> Date Posted Filter</label>
+          <select id="filter-time" class="filter-control">
+            <option value="r86400" selected>🕒 Past 24 Hours</option>
+            <option value="r604800">📅 Past 1 Week</option>
+            <option value="r2592000">🗓️ Past 1 Month</option>
+            <option value="r0">🌐 Anytime</option>
+          </select>
+        </div>
+
+        <!-- 4. Workplace Type (Remote, Hybrid, Onsite) -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-building-user"></i> Workplace Type</label>
+          <select id="filter-worktype" class="filter-control">
+            <option value="2,3" selected>🏠 Remote & 🏢 Hybrid</option>
+            <option value="2">🏠 Remote Only</option>
+            <option value="3">🏢 Hybrid Only</option>
+            <option value="1">💼 On-site Only</option>
+            <option value="1,2,3">🌟 All Work Types (On-site, Remote, Hybrid)</option>
+          </select>
+        </div>
+
+        <!-- 5. Max Scan Depth (Pages) -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-file-lines"></i> Scan Depth (Pages)</label>
+          <select id="filter-pages" class="filter-control">
+            <option value="1">⚡ 1 Page (~25 jobs)</option>
+            <option value="3" selected>🎯 3 Pages (~75 jobs)</option>
+            <option value="5">🚀 5 Pages (~125 jobs)</option>
+            <option value="10">📊 10 Pages (~250 jobs)</option>
+          </select>
+        </div>
+
+        <!-- 6. Min AI Match Score Threshold -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-star"></i> Min AI Score Cap</label>
+          <select id="filter-min-score" class="filter-control">
+            <option value="2.0">⭐ 2.0 / 5.0 (Lenient)</option>
+            <option value="2.5" selected>⭐ 2.5 / 5.0 (Recommended)</option>
+            <option value="3.0">⭐ 3.0 / 5.0 (Strict)</option>
+            <option value="3.5">⭐ 3.5 / 5.0 (Very High Match)</option>
+            <option value="4.0">⭐ 4.0 / 5.0 (Top Tier Only)</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
     <!-- 3-Step Interactive Automation Pipeline Bar -->
     <div class="pipeline-bar">
@@ -824,13 +973,13 @@
       </div>
 
       <div class="pipeline-steps">
-        <button class="btn btn-secondary" onclick="runAction('/api/scan')">
-          <i class="fa-solid fa-magnifying-glass"></i> Step 1: Scan 24h Jobs
+        <button class="btn btn-secondary" onclick="triggerScan()">
+          <i class="fa-solid fa-magnifying-glass"></i> Step 1: Scan Jobs
         </button>
         <button class="btn btn-secondary" onclick="runAction('/api/evaluate')">
           <i class="fa-solid fa-wand-magic-sparkles"></i> Step 2: AI Evaluate
         </button>
-        <button class="btn btn-primary" onclick="runAction('/api/apply-all')">
+        <button class="btn btn-primary" onclick="triggerApply()">
           <i class="fa-solid fa-paper-plane"></i> Step 3: Auto-Apply Queue
         </button>
         <button class="btn" style="background: #EF4444; color: #FFFFFF;" onclick="runAction('/api/stop')">
@@ -1456,6 +1605,45 @@
       }
     }
 
+    /* Search & Automation Filter Trigger Handlers */
+    function toggleCustomLocationInput() {
+      const select = document.getElementById('filter-location-select');
+      const customInput = document.getElementById('filter-location-custom');
+      if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+      }
+    }
+
+    function getScanPayload() {
+      const query = document.getElementById('filter-query')?.value.trim() || 'Angular Developer';
+      const locSelect = document.getElementById('filter-location-select')?.value;
+      const locCustom = document.getElementById('filter-location-custom')?.value.trim();
+      const location = (locSelect === 'custom' ? (locCustom || 'India') : (locSelect || 'India'));
+
+      const timePosted = document.getElementById('filter-time')?.value || 'r86400';
+      const workTypes = document.getElementById('filter-worktype')?.value || '2,3';
+      const pages = document.getElementById('filter-pages')?.value || '3';
+      const minScore = document.getElementById('filter-min-score')?.value || '2.5';
+
+      return { query, location, timePosted, workTypes, pages, minScore };
+    }
+
+    function triggerScan() {
+      runAction('/api/scan', getScanPayload());
+    }
+
+    function triggerRunAll() {
+      runAction('/api/run-all', getScanPayload());
+    }
+
+    function triggerApply() {
+      const minScore = document.getElementById('filter-min-score')?.value || '2.5';
+      runAction('/api/apply-all', { minScore });
+    }
+
     async function runAction(endpoint, payload = {}) {
       showToast('Process launched! Streaming live logs below...', 'info');
       try {
@@ -1488,6 +1676,56 @@
     loadDashboardData();
     initTerminalStream();
     setInterval(loadDashboardData, 10000);
+  </script>
+
+  <!-- Real-time Firebase Firestore Sync for Netlify & Live App -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnITBNxJMkPvxMQSy5sHNWL6TuWCeCCUA",
+      authDomain: "jobops-7d4ea.firebaseapp.com",
+      projectId: "jobops-7d4ea",
+      storageBucket: "jobops-7d4ea.firebasestorage.app",
+      messagingSenderId: "1057061610936",
+      appId: "1:1057061610936:web:8eabe53d99374108fa5b4d",
+      measurementId: "G-6WM0TS03L3"
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      onSnapshot(collection(db, "jobs"), (snapshot) => {
+        const firestoreJobs = [];
+        snapshot.forEach((doc) => firestoreJobs.push(doc.data()));
+
+        if (firestoreJobs.length > 0) {
+          allJobs = firestoreJobs;
+          const totalScanned = firestoreJobs.length;
+          const topMatches = firestoreJobs.filter(j => (j.score || 0) >= 2.5).length;
+          const totalApplied = firestoreJobs.filter(j => j.status === 'applied').length;
+          const avgScore = firestoreJobs.length > 0 ? (firestoreJobs.reduce((a, b) => a + (b.score || 0), 0) / firestoreJobs.length) : 0;
+
+          const elScanned = document.getElementById('stat-scanned');
+          const elMatches = document.getElementById('stat-matches');
+          const elApplied = document.getElementById('stat-applied');
+          const elAvgScore = document.getElementById('stat-avg-score');
+
+          if (elScanned) elScanned.innerText = totalScanned;
+          if (elMatches) elMatches.innerText = topMatches;
+          if (elApplied) elApplied.innerText = totalApplied;
+          if (elAvgScore) elAvgScore.innerText = avgScore.toFixed(1);
+
+          if (typeof filterJobs === 'function') {
+            filterJobs();
+          }
+        }
+      });
+    } catch (err) {
+      console.warn("Firebase Live Sync Note:", err);
+    }
   </script>
 </body>
 </html>

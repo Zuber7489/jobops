@@ -63,6 +63,8 @@ export function exportJobsToJson() {
   }
 }
 
+import { syncJobToFirebase } from '../utils/firebase';
+
 export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number {
   const db = getDb();
   const stmt = db.prepare(`
@@ -87,6 +89,9 @@ export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number
   // Static JSON export for Netlify live app
   exportJobsToJson();
 
+  // Async Firebase Firestore sync (if FIREBASE_PROJECT_ID is provided in .env)
+  syncJobToFirebase(recordToInsert as JobRecord).catch(() => null);
+
   return info.lastInsertRowid as number;
 }
 
@@ -109,4 +114,10 @@ export function updateJobStatus(externalJobId: string, status: JobRecord['status
   `).run(status, externalJobId);
 
   exportJobsToJson();
+
+  // Sync updated status to Firebase
+  const updatedJob = db.prepare(`SELECT * FROM jobs WHERE external_job_id = ?`).get(externalJobId) as JobRecord;
+  if (updatedJob) {
+    syncJobToFirebase(updatedJob).catch(() => null);
+  }
 }

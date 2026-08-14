@@ -332,10 +332,16 @@ export function startDashboardServer(port: number = 3000) {
       const query = body.query || 'Angular Developer';
       const location = body.location || 'India';
       const pages = body.pages ? body.pages.toString() : '3';
+      const workTypes = body.workTypes || '2,3';
+      const timePosted = body.timePosted || 'r86400';
 
-      res.json({ message: `🔍 Step 1: LinkedIn 24-hour Job Scan launched!` });
+      const scanArgs = ['linkedin-scan', '--query', query, '--location', location, '--pages', pages];
+      if (workTypes) scanArgs.push('--work-types', workTypes);
+      if (timePosted) scanArgs.push('-t', timePosted);
+
+      res.json({ message: `🔍 Step 1: LinkedIn Job Scan launched for "${query}" (${location})!` });
       await ensureChromeCdpRunning(9222);
-      runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', pages, '-t', 'r86400']);
+      runCliCommand(scanArgs);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
     }
@@ -370,15 +376,23 @@ export function startDashboardServer(port: number = 3000) {
       const body = req.body || {};
       const query = body.query || 'Angular Developer';
       const location = body.location || 'India';
+      const pages = body.pages ? body.pages.toString() : '3';
+      const workTypes = body.workTypes || '2,3';
+      const timePosted = body.timePosted || 'r86400';
+      const minScore = body.minScore || '2.5';
+
+      const scanArgs = ['linkedin-scan', '--query', query, '--location', location, '--pages', pages];
+      if (workTypes) scanArgs.push('--work-types', workTypes);
+      if (timePosted) scanArgs.push('-t', timePosted);
 
       res.json({ message: `🔥 Full Automated Job Pipeline launched! (Scan ➔ Evaluate ➔ Auto-Apply)` });
 
       (async () => {
         broadcastLog(`\n🚀 [Full Automation Pipeline] Starting 3-Step Workflow...`);
         await ensureChromeCdpRunning(9222);
-        await runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', '3', '-t', 'r86400']);
+        await runCliCommand(scanArgs);
         await runCliCommand(['evaluate']);
-        await runCliCommand(['linkedin-apply', '--min-score', '2.5', '--auto']);
+        await runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
         broadcastLog(`🎉 [Full Automation Pipeline Completed] All 3 steps finished successfully!`);
       })();
     } catch (err: any) {

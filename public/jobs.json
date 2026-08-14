@@ -1,5 +1,117 @@
 [
   {
+    "id": 1789,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4452996722",
+    "title": "Lead UI/UX Engineer Opportunity",
+    "company": "Kellton",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4452996722/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=jt88kKcmZ9cNjeA4q1AQ1A%3D%3D&trackingId=H6nnX28K5mnqBTFobArXhQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Lead UI/UX Engineer Opportunity at Kellton",
+    "apply_type": "easy-apply",
+    "score": 2,
+    "evaluation_reason": "General Tech Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-14 12:20:21",
+    "applied_at": null
+  },
+  {
+    "id": 1788,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4453205207",
+    "title": "UI Developer - Return-to-Work Program",
+    "company": "Precision Technologies",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4453205207/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=jt88kKcmZ9cNjeA4q1AQ1A%3D%3D&trackingId=yhV23JqF1D4hX31cw%2BO9jQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: UI Developer - Return-to-Work Program at Precision Technologies",
+    "apply_type": "easy-apply",
+    "score": 2.8,
+    "evaluation_reason": "Matched: ui developer",
+    "status": "applied",
+    "scanned_at": "2026-08-14 12:20:20",
+    "applied_at": "2026-08-14 12:29:48"
+  },
+  {
+    "id": 1787,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4453244650",
+    "title": "Full Stack Engineer",
+    "company": "The United Green",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4453244650/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=jt88kKcmZ9cNjeA4q1AQ1A%3D%3D&trackingId=X5zW0iT%2F9riq2xNWGwmXGg%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Full Stack Engineer at The United Green",
+    "apply_type": "easy-apply",
+    "score": 2.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "applied",
+    "scanned_at": "2026-08-14 12:20:19",
+    "applied_at": "2026-08-14 12:29:06"
+  },
+  {
+    "id": 1786,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4454019379",
+    "title": "Junior Software Engineer",
+    "company": "Helic & Co",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4454019379/?trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Junior Software Engineer at Helic & Co",
+    "apply_type": "easy-apply",
+    "score": 2,
+    "evaluation_reason": "General Tech Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-14 12:20:18",
+    "applied_at": null
+  },
+  {
+    "id": 1785,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4453514783",
+    "title": "Mid Frontend Engineer (Angular, React, TS)",
+    "company": "Jobgether",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4453514783/?trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Mid Frontend Engineer (Angular, React, TS) at Jobgether",
+    "apply_type": "easy-apply",
+    "score": 4.3,
+    "evaluation_reason": "Matched: angular, frontend",
+    "status": "applied",
+    "scanned_at": "2026-08-14 12:20:17",
+    "applied_at": "2026-08-14 12:23:31"
+  },
+  {
+    "id": 1784,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4453531591",
+    "title": "Senior Frontend Engineer (Angular, React, TS)",
+    "company": "Jobgether",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4453531591/?trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Senior Frontend Engineer (Angular, React, TS) at Jobgether",
+    "apply_type": "easy-apply",
+    "score": 4.3,
+    "evaluation_reason": "Matched: angular, frontend",
+    "status": "applied",
+    "scanned_at": "2026-08-14 12:20:16",
+    "applied_at": "2026-08-14 12:22:43"
+  },
+  {
+    "id": 1783,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4444329719",
+    "title": "Web Developer (HTML,CSS) | $90/hr Remote",
+    "company": "Crossing Hurdles",
+    "location": "United States (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4444329719/?trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Web Developer (HTML,CSS) | $90/hr Remote at Crossing Hurdles",
+    "apply_type": "easy-apply",
+    "score": 3.3999999999999995,
+    "evaluation_reason": "Matched: web developer, css, html",
+    "status": "applied",
+    "scanned_at": "2026-08-14 12:20:15",
+    "applied_at": "2026-08-14 12:25:41"
+  },
+  {
     "id": 1782,
     "platform": "linkedin",
     "external_job_id": "linkedin_4453541023",
@@ -91,9 +203,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:54",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:28:18"
   },
   {
     "id": 1776,
@@ -107,9 +219,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:53",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:27:48"
   },
   {
     "id": 1775,
@@ -139,9 +251,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:46",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:26:54"
   },
   {
     "id": 1773,
@@ -187,9 +299,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:43",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:26:20"
   },
   {
     "id": 1770,
@@ -203,9 +315,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:42",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:15:35"
   },
   {
     "id": 1769,
@@ -251,9 +363,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:34",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:15:05"
   },
   {
     "id": 1766,
@@ -283,9 +395,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-14 11:33:31",
-    "applied_at": null
+    "applied_at": "2026-08-14 12:14:31"
   },
   {
     "id": 1763,
