@@ -4,6 +4,7 @@ import fs from 'fs';
 import { spawn } from 'child_process';
 import { getDb } from '../db/schema';
 import { loadProfile, saveProfile } from '../config';
+import { ensureChromeCdpRunning } from '../utils/chrome-launcher';
 
 const recentLogs: string[] = [
   `[${new Date().toLocaleTimeString()}] 🚀 JobOps Live Automation Console initialized.`
@@ -272,6 +273,21 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
+  // POST /api/launch-chrome - Manual or Auto Launch Chrome Debugging Browser
+  app.post('/api/launch-chrome', async (req, res) => {
+    try {
+      const launched = await ensureChromeCdpRunning(9222);
+      if (launched) {
+        broadcastLog(`🌐 [Chrome Auto-Launcher] Chrome opened with --remote-debugging-port=9222`);
+        res.json({ message: `✅ Chrome browser launched with debugging port 9222!` });
+      } else {
+        res.status(500).json({ error: `Could not auto-launch Chrome. Please launch Chrome manually.` });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Action 1: POST /api/scan
   app.post('/api/scan', async (req, res) => {
     try {
@@ -281,6 +297,7 @@ export function startDashboardServer(port: number = 3000) {
       const pages = body.pages ? body.pages.toString() : '3';
 
       res.json({ message: `🔍 Step 1: LinkedIn 24-hour Job Scan launched!` });
+      await ensureChromeCdpRunning(9222);
       runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', pages, '-t', 'r86400']);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
@@ -298,11 +315,12 @@ export function startDashboardServer(port: number = 3000) {
   });
 
   // Action 3: POST /api/apply-all
-  app.post('/api/apply-all', (req, res) => {
+  app.post('/api/apply-all', async (req, res) => {
     try {
       const body = req.body || {};
       const minScore = body.minScore || '2.5';
       res.json({ message: `🤖 Step 3: AI Easy Apply Auto-Apply launched!` });
+      await ensureChromeCdpRunning(9222);
       runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
@@ -320,6 +338,7 @@ export function startDashboardServer(port: number = 3000) {
 
       (async () => {
         broadcastLog(`\n🚀 [Full Automation Pipeline] Starting 3-Step Workflow...`);
+        await ensureChromeCdpRunning(9222);
         await runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', '3', '-t', 'r86400']);
         await runCliCommand(['evaluate']);
         await runCliCommand(['linkedin-apply', '--min-score', '2.5', '--auto']);
