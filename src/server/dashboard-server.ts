@@ -5,6 +5,7 @@ import { spawn } from 'child_process';
 import { getDb } from '../db/schema';
 import { loadProfile, saveProfile, CONFIG } from '../config';
 import { ensureChromeCdpRunning } from '../utils/chrome-launcher';
+import { deleteJobFromFirebase } from '../utils/firebase';
 
 const recentLogs: string[] = [
   `[${new Date().toLocaleTimeString()}] 🚀 JobOps Live Automation Console initialized.`
@@ -142,6 +143,10 @@ export function startDashboardServer(port: number = 3000) {
   app.delete('/api/jobs', (req, res) => {
     try {
       const db = getDb();
+      const allJobs = db.prepare(`SELECT external_job_id FROM jobs`).all() as any[];
+      for (const j of allJobs) {
+        deleteJobFromFirebase(j.external_job_id).catch(() => null);
+      }
       const info = db.prepare(`DELETE FROM jobs`).run();
       broadcastLog(`🗑️ [Database Cleared] Removed all ${info.changes} job records.`);
       res.json({ success: true, deletedCount: info.changes, message: `🗑️ Cleared all ${info.changes} job records!` });
@@ -155,6 +160,10 @@ export function startDashboardServer(port: number = 3000) {
     try {
       const db = getDb();
       const { id } = req.params;
+      const targetJob = db.prepare(`SELECT external_job_id FROM jobs WHERE id = ?`).get(id) as any;
+      if (targetJob) {
+        deleteJobFromFirebase(targetJob.external_job_id).catch(() => null);
+      }
       const info = db.prepare(`DELETE FROM jobs WHERE id = ?`).run(id);
       res.json({ success: true, deletedCount: info.changes });
     } catch (err: any) {

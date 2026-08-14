@@ -80,3 +80,34 @@ export async function syncAllExistingJobsToFirebase(): Promise<number> {
   console.log(`✅ [Firebase Sync] Successfully synced ${synced}/${allJobs.length} jobs to Firebase Firestore.`);
   return synced;
 }
+
+/**
+ * Deletes a single job document from Firebase Firestore
+ */
+export async function deleteJobFromFirebase(externalJobId: string): Promise<boolean> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return false;
+
+  try {
+    const docId = externalJobId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/jobs/${docId}`;
+
+    await new Promise((resolve) => {
+      const req = https.request(url, { method: 'DELETE' }, (res) => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          console.log(`🗑️ [Firebase Sync] Deleted job ${externalJobId} from Firestore`);
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+      req.on('error', () => resolve(false));
+      req.end();
+    });
+
+    return true;
+  } catch (err: any) {
+    console.error(`⚠️ [Firebase Delete Error]: ${err.message}`);
+    return false;
+  }
+}
