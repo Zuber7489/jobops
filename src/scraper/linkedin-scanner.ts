@@ -36,6 +36,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       page = await browserContext.newPage();
       isCdpSession = true;
       console.log(`✅ [LinkedIn Scanner] Using active Chrome session on CDP port ${CONFIG.cdpPort}`);
+      await page.bringToFront().catch(() => null);
     } catch {
       standaloneBrowser = await chromium.launch({
         headless,

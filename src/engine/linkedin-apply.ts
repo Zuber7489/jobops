@@ -166,6 +166,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       browserContext = browser.contexts()[0] || await browser.newContext();
       page = await browserContext.newPage();
       console.log(`✅ Connected to active Chrome session!`);
+      await page.bringToFront().catch(() => null);
     } catch (cdpErr) {
       console.log(`\n❌ [Connection Required] Active Chrome browser session not found on CDP port ${CONFIG.cdpPort}.`);
       console.log(`👉 Please run: npx ts-node src/index.ts launch-chrome\n`);
