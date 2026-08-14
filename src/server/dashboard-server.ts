@@ -262,41 +262,60 @@ export function startDashboardServer(port: number = 3000) {
 
   // Action 1: POST /api/scan
   app.post('/api/scan', async (req, res) => {
-    const query = req.body.query || 'Angular Developer';
-    const location = req.body.location || 'India';
-    const pages = req.body.pages ? req.body.pages.toString() : '3';
+    try {
+      const body = req.body || {};
+      const query = body.query || 'Angular Developer';
+      const location = body.location || 'India';
+      const pages = body.pages ? body.pages.toString() : '3';
 
-    res.json({ message: `🔍 Step 1: LinkedIn 24-hour Job Scan launched!` });
-    runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', pages, '-t', 'r86400']);
+      res.json({ message: `🔍 Step 1: LinkedIn 24-hour Job Scan launched!` });
+      runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', pages, '-t', 'r86400']);
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
   });
 
   // Action 2: POST /api/evaluate
   app.post('/api/evaluate', (req, res) => {
-    res.json({ message: `⚡ Step 2: AI Job Evaluator launched!` });
-    runCliCommand(['evaluate']);
+    try {
+      res.json({ message: `⚡ Step 2: AI Job Evaluator launched!` });
+      runCliCommand(['evaluate']);
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
   });
 
   // Action 3: POST /api/apply-all
   app.post('/api/apply-all', (req, res) => {
-    const minScore = req.body.minScore || '2.5';
-    res.json({ message: `🤖 Step 3: AI Easy Apply Auto-Apply launched!` });
-    runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
+    try {
+      const body = req.body || {};
+      const minScore = body.minScore || '2.5';
+      res.json({ message: `🤖 Step 3: AI Easy Apply Auto-Apply launched!` });
+      runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
   });
 
   // Action 4: POST /api/run-all (Full Pipeline: Scan ➔ Evaluate ➔ Auto-Apply)
   app.post('/api/run-all', async (req, res) => {
-    const query = req.body.query || 'Angular Developer';
-    const location = req.body.location || 'India';
+    try {
+      const body = req.body || {};
+      const query = body.query || 'Angular Developer';
+      const location = body.location || 'India';
 
-    res.json({ message: `🔥 Full Automated Job Pipeline launched! (Scan ➔ Evaluate ➔ Auto-Apply)` });
+      res.json({ message: `🔥 Full Automated Job Pipeline launched! (Scan ➔ Evaluate ➔ Auto-Apply)` });
 
-    (async () => {
-      broadcastLog(`\n🚀 [Full Automation Pipeline] Starting 3-Step Workflow...`);
-      await runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', '3', '-t', 'r86400']);
-      await runCliCommand(['evaluate']);
-      await runCliCommand(['linkedin-apply', '--min-score', '2.5', '--auto']);
-      broadcastLog(`🎉 [Full Automation Pipeline Completed] All 3 steps finished successfully!`);
-    })();
+      (async () => {
+        broadcastLog(`\n🚀 [Full Automation Pipeline] Starting 3-Step Workflow...`);
+        await runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', '3', '-t', 'r86400']);
+        await runCliCommand(['evaluate']);
+        await runCliCommand(['linkedin-apply', '--min-score', '2.5', '--auto']);
+        broadcastLog(`🎉 [Full Automation Pipeline Completed] All 3 steps finished successfully!`);
+      })();
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
   });
 
   // Serve SPA index.html for any unmatched route

@@ -870,6 +870,26 @@
       </div>
     </div>
 
+    <!-- Live Terminal Console Window -->
+    <div class="terminal-panel" style="margin-bottom: 32px;">
+      <div class="terminal-header">
+        <div class="terminal-title">
+          <span></span>
+          JobOps Live Terminal & Process Output Stream
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-icon" style="background: #18181B; color: #FFF; border-color: #27272A" onclick="clearTerminalConsole()" title="Clear Console">
+            <i class="fa-solid fa-eraser"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="terminal-console" class="terminal-console">
+        <div class="terminal-line">[System] Terminal console initialized. Connected to JobOps server.</div>
+      </div>
+    </div>
+
     <!-- Main Content Layout -->
     <div class="dashboard-layout">
       
@@ -974,26 +994,6 @@
 
       </div>
 
-    </div>
-
-    <!-- Live Terminal Console Window -->
-    <div class="terminal-panel">
-      <div class="terminal-header">
-        <div class="terminal-title">
-          <span></span>
-          JobOps Live Terminal & Process Output Stream
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-icon" style="background: #18181B; color: #FFF; border-color: #27272A" onclick="clearTerminalConsole()" title="Clear Console">
-            <i class="fa-solid fa-eraser"></i>
-          </button>
-        </div>
-      </div>
-
-      <div id="terminal-console" class="terminal-console">
-        <div class="terminal-line">[System] Terminal console initialized. Connected to JobOps server.</div>
-      </div>
     </div>
 
   </div>
@@ -1450,12 +1450,20 @@
       }
     }
 
-    async function runAction(endpoint) {
+    async function runAction(endpoint, payload = {}) {
       showToast('Process launched! Streaming live logs below...', 'info');
       try {
-        const res = await fetch(endpoint, { method: 'POST' });
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
         const data = await res.json();
-        showToast(data.message || 'Action launched!', 'success');
+        if (res.ok) {
+          showToast(data.message || 'Action launched!', 'success');
+        } else {
+          showToast(data.error || 'Action failed', 'error');
+        }
       } catch (e) {
         showToast('Action trigger failed', 'error');
       }
