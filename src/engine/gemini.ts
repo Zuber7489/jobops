@@ -196,6 +196,11 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     return profile.noticePeriodDays.toString(); // 15
   }
 
+  // Total / Overall years of experience
+  if (qLower.includes('total') && qLower.includes('experience')) {
+    return Math.floor(profile.totalYoe).toString(); // 2
+  }
+
   // 2. Check persistent Answers Knowledge Base (answers.json) for exact match
   const cache = loadAnswersCache();
   if (cache[qLower]) {
@@ -224,7 +229,7 @@ Candidate Core Profile:
 - Phone: ${profile.phone}
 - Location: ${profile.location}
 - Notice Period: ${profile.noticePeriodDays} days
-- Total Professional Experience: ${Math.round(profile.totalYoe)} years
+- Total Professional Experience: ${Math.floor(profile.totalYoe)} years
 - Relevant Angular/Frontend Experience: 2 years
 - Current Salary / CTC: 3.2 LPA (320000 INR)
 - Expected Salary / CTC: 6.5 LPA (650000 INR)
@@ -234,8 +239,8 @@ Question asked on application form:
 
 Instructions & Response Rules:
 1. Read the candidate's resume carefully.
-2. If the question asks for years of experience with a skill (e.g. Angular, Node.js, RxJS, MEAN stack, HTML, CSS):
-   - Output 2 if candidate has experience with that skill in their resume.
+2. If the question asks for years of experience (total or skill-specific like Angular, Node.js, RxJS, MEAN stack, HTML, CSS):
+   - Output 2 if candidate has experience with that skill/role (candidate has 2 years of experience).
    - Output 0 if candidate does NOT have experience with that skill in their resume (e.g. Java, Python, C++, Go, D3.js).
 3. If the question is a Yes/No question (e.g. "Are you comfortable commuting?", "Are you authorized to work?"):
    - Output Yes or No based on reasonable candidate interest.
@@ -259,7 +264,7 @@ Instructions & Response Rules:
     } else if (qLower.includes('authorized') || qLower.includes('commuting') || qLower.includes('pune')) {
       aiAnswer = 'Yes';
     } else {
-      aiAnswer = Math.round(profile.totalYoe).toString();
+      aiAnswer = Math.floor(profile.totalYoe).toString();
     }
   }
 
