@@ -8,17 +8,18 @@ export interface LinkedInScanOptions {
   maxPages?: number;
   headless?: boolean;
   workTypes?: string; // e.g. '2,3' for Remote & Hybrid. Default: '2,3'
+  timePosted?: string; // e.g. 'r86400' for past 24 hours. Default: 'r86400'
 }
 
 export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<JobRecord[]> {
-  const { query, location = 'India', maxPages = 3, headless = true, workTypes = '2,3' } = options;
+  const { query, location = 'India', maxPages = 3, headless = true, workTypes = '2,3', timePosted = 'r86400' } = options;
 
-  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Remote/Hybrid Filtered)...`);
+  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Remote/Hybrid + Past 24 Hours)...`);
 
   const encodedQuery = encodeURIComponent(query);
   const encodedLocation = encodeURIComponent(location);
-  // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types)
-  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=${workTypes}`;
+  // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types) | f_TPR=r86400 (Past 24 Hours)
+  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=${workTypes}&f_TPR=${timePosted}`;
 
   let browserContext: BrowserContext | null = null;
   let standaloneBrowser: any = null;

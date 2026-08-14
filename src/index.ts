@@ -39,11 +39,12 @@ program
 // Command 2: linkedin-scan
 program
   .command('linkedin-scan')
-  .description('Scan jobs from LinkedIn Easy Apply (Filtered for Remote & Hybrid)')
+  .description('Scan jobs from LinkedIn Easy Apply (Filtered for Remote & Hybrid, Past 24 hours)')
   .option('-q, --query <text>', 'Job title / skills query', 'Angular Developer')
   .option('-l, --location <city>', 'Job location', 'India')
   .option('-p, --pages <number>', 'Number of pages to scan', '3')
   .option('--work-types <types>', 'LinkedIn work type filter (2=Remote, 3=Hybrid, default: "2,3")', '2,3')
+  .option('-t, --time <seconds>', 'LinkedIn time posted filter (default: "r86400" for past 24 hours)', 'r86400')
   .option('--headed', 'Run browser in headed mode', false)
   .action(async (options) => {
     await scanLinkedInJobs({
@@ -51,7 +52,8 @@ program
       location: options.location,
       maxPages: parseInt(options.pages, 10),
       headless: !options.headed,
-      workTypes: options.workTypes
+      workTypes: options.workTypes,
+      timePosted: options.time
     });
   });
 
