@@ -296,6 +296,20 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
+  // POST /api/stop - Stop currently running automation process
+  app.post('/api/stop', (req, res) => {
+    try {
+      const stopped = stopActiveChildProcess();
+      if (stopped) {
+        res.json({ message: '🛑 Automation process stopped successfully!' });
+      } else {
+        res.json({ message: 'ℹ️ No active automation process was running.' });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // POST /api/launch-chrome - Manual or Auto Launch Chrome Debugging Browser
   app.post('/api/launch-chrome', async (req, res) => {
     try {
