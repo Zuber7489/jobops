@@ -1683,49 +1683,57 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBnITBNxJMkPvxMQSy5sHNWL6TuWCeCCUA",
-      authDomain: "jobops-7d4ea.firebaseapp.com",
-      projectId: "jobops-7d4ea",
-      storageBucket: "jobops-7d4ea.firebasestorage.app",
-      messagingSenderId: "1057061610936",
-      appId: "1:1057061610936:web:8eabe53d99374108fa5b4d",
-      measurementId: "G-6WM0TS03L3"
-    };
-
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      onSnapshot(collection(db, "jobs"), (snapshot) => {
-        const firestoreJobs = [];
-        snapshot.forEach((doc) => firestoreJobs.push(doc.data()));
-
-        if (firestoreJobs.length > 0) {
-          allJobs = firestoreJobs;
-          const totalScanned = firestoreJobs.length;
-          const topMatches = firestoreJobs.filter(j => (j.score || 0) >= 2.5).length;
-          const totalApplied = firestoreJobs.filter(j => j.status === 'applied').length;
-          const avgScore = firestoreJobs.length > 0 ? (firestoreJobs.reduce((a, b) => a + (b.score || 0), 0) / firestoreJobs.length) : 0;
-
-          const elScanned = document.getElementById('stat-scanned');
-          const elMatches = document.getElementById('stat-matches');
-          const elApplied = document.getElementById('stat-applied');
-          const elAvgScore = document.getElementById('stat-avg-score');
-
-          if (elScanned) elScanned.innerText = totalScanned;
-          if (elMatches) elMatches.innerText = topMatches;
-          if (elApplied) elApplied.innerText = totalApplied;
-          if (elAvgScore) elAvgScore.innerText = avgScore.toFixed(1);
-
-          if (typeof filterJobs === 'function') {
-            filterJobs();
-          }
+    async function initFirebaseSync() {
+      try {
+        const configRes = await fetch('/api/firebase-config').catch(() => null);
+        let firebaseConfig = null;
+        if (configRes && configRes.ok) {
+          firebaseConfig = await configRes.json();
         }
-      });
-    } catch (err) {
-      console.warn("Firebase Live Sync Note:", err);
+
+        if (!firebaseConfig || !firebaseConfig.projectId) {
+          firebaseConfig = {
+            projectId: "jobops-7d4ea"
+          };
+        }
+
+        if (!firebaseConfig.projectId) return;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        onSnapshot(collection(db, "jobs"), (snapshot) => {
+          const firestoreJobs = [];
+          snapshot.forEach((doc) => firestoreJobs.push(doc.data()));
+
+          if (firestoreJobs.length > 0) {
+            allJobs = firestoreJobs;
+            const totalScanned = firestoreJobs.length;
+            const topMatches = firestoreJobs.filter(j => (j.score || 0) >= 2.5).length;
+            const totalApplied = firestoreJobs.filter(j => j.status === 'applied').length;
+            const avgScore = firestoreJobs.length > 0 ? (firestoreJobs.reduce((a, b) => a + (b.score || 0), 0) / firestoreJobs.length) : 0;
+
+            const elScanned = document.getElementById('stat-scanned');
+            const elMatches = document.getElementById('stat-matches');
+            const elApplied = document.getElementById('stat-applied');
+            const elAvgScore = document.getElementById('stat-avg-score');
+
+            if (elScanned) elScanned.innerText = totalScanned;
+            if (elMatches) elMatches.innerText = topMatches;
+            if (elApplied) elApplied.innerText = totalApplied;
+            if (elAvgScore) elAvgScore.innerText = avgScore.toFixed(1);
+
+            if (typeof filterJobs === 'function') {
+              filterJobs();
+            }
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase Live Sync Note:", err);
+      }
     }
+
+    initFirebaseSync();
   </script>
 </body>
 </html>

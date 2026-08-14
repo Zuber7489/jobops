@@ -37,3 +37,11 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Personal Knowledge Base, Resume & Config Data
+answers.json
+profile.yml
+cv.md
+resume.pdf
+public/jobs.json
+

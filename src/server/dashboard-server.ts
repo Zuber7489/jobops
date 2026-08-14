@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import { getDb } from '../db/schema';
-import { loadProfile, saveProfile } from '../config';
+import { loadProfile, saveProfile, CONFIG } from '../config';
 import { ensureChromeCdpRunning } from '../utils/chrome-launcher';
 
 const recentLogs: string[] = [
@@ -294,6 +294,19 @@ export function startDashboardServer(port: number = 3000) {
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // GET /api/firebase-config
+  app.get('/api/firebase-config', (req, res) => {
+    res.json({
+      apiKey: CONFIG.firebaseApiKey,
+      authDomain: CONFIG.firebaseAuthDomain,
+      projectId: CONFIG.firebaseProjectId,
+      storageBucket: CONFIG.firebaseStorageBucket,
+      messagingSenderId: CONFIG.firebaseMessagingSenderId,
+      appId: CONFIG.firebaseAppId,
+      measurementId: CONFIG.firebaseMeasurementId
+    });
   });
 
   // POST /api/stop - Stop currently running automation process
