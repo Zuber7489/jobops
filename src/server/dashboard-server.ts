@@ -24,8 +24,28 @@ function broadcastLog(line: string) {
   });
 }
 
+let currentChildProcess: any = null;
+
+function stopActiveChildProcess(): boolean {
+  if (currentChildProcess) {
+    broadcastLog(`\n🛑 [Stop Automation] Halting active process...`);
+    try {
+      if (process.platform === 'win32' && currentChildProcess.pid) {
+        spawn('taskkill', ['/F', '/T', '/PID', currentChildProcess.pid.toString()]);
+      } else {
+        currentChildProcess.kill('SIGINT');
+      }
+    } catch (e) {}
+    currentChildProcess = null;
+    return true;
+  }
+  return false;
+}
+
 function runCliCommand(args: string[]): Promise<number> {
   return new Promise((resolve) => {
+    stopActiveChildProcess(); // Stop any existing process first
+
     broadcastLog(`\n💻 Executing: npx ts-node src/index.ts ${args.join(' ')}`);
     
     const child = spawn('npx', ['ts-node', 'src/index.ts', ...args], {
@@ -33,6 +53,8 @@ function runCliCommand(args: string[]): Promise<number> {
       shell: true,
       env: { ...process.env, FORCE_COLOR: '1' }
     });
+
+    currentChildProcess = child;
 
     child.stdout.on('data', data => {
       const lines = data.toString().split('\n');
@@ -51,6 +73,7 @@ function runCliCommand(args: string[]): Promise<number> {
     });
 
     child.on('close', code => {
+      currentChildProcess = null;
       broadcastLog(`✨ [Process Completed] Exit Code: ${code}`);
       resolve(code || 0);
     });

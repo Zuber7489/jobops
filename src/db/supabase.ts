@@ -37,11 +37,15 @@ export async function syncJobToSupabase(job: any) {
     }, { onConflict: 'external_job_id' });
 
     if (error) {
-      console.warn(`⚠️ [Supabase Sync Note]: ${error.message}`);
+      if (!error.message.includes('fetch failed')) {
+        console.warn(`⚠️ [Supabase Sync Note]: ${error.message}`);
+      }
     } else {
       console.log(`☁️ [Supabase Synced] Job: "${job.title}" @ ${job.company}`);
     }
   } catch (e: any) {
-    console.warn(`⚠️ [Supabase Error]: ${e.message}`);
+    if (e.message && !e.message.includes('fetch failed')) {
+      console.warn(`⚠️ [Supabase Error]: ${e.message}`);
+    }
   }
 }
