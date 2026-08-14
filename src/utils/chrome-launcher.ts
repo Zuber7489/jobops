@@ -55,6 +55,8 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
     const child = spawn(chromePath, [
       `--remote-debugging-port=${port}`,
       `--user-data-dir=${userDataDir}`,
+      '--start-maximized',
+      '--new-window',
       'https://www.linkedin.com'
     ], {
       detached: true,
