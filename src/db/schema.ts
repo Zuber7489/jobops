@@ -48,6 +48,8 @@ function initDb(db: Database.Database) {
       applied_at DATETIME
     );
   `);
+}
+
 import fs from 'fs';
 import path from 'path';
 
