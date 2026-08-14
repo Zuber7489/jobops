@@ -4,8 +4,9 @@ import fs from 'fs';
 import { spawn } from 'child_process';
 import { getDb } from '../db/schema';
 import { loadProfile, saveProfile, CONFIG } from '../config';
+const pdfParse = require('pdf-parse');
 import { ensureChromeCdpRunning } from '../utils/chrome-launcher';
-import { deleteJobFromFirebase } from '../utils/firebase';
+import { deleteJobFromFirebase, syncAnswerToFirebase, deleteAnswerFromFirebase, syncCandidateProfileToFirebase } from '../utils/firebase';
 
 const recentLogs: string[] = [
   `[${new Date().toLocaleTimeString()}] 🚀 JobOps Live Automation Console initialized.`
@@ -277,6 +278,10 @@ export function startDashboardServer(port: number = 3000) {
 
       fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
       broadcastLog(`💾 [Knowledge Base Saved] "${question}" ➔ "${answer}"`);
+
+      // Sync to Firebase Firestore 'answers' collection
+      syncAnswerToFirebase(question, answer.toString()).catch(() => null);
+
       res.json({ message: `✅ Saved answer for "${question}"`, cache });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -296,12 +301,76 @@ export function startDashboardServer(port: number = 3000) {
       if (cache[key] !== undefined) {
         delete cache[key];
         fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
+
+        // Sync deletion to Firebase Firestore 'answers' collection
+        deleteAnswerFromFirebase(key).catch(() => null);
+
         return res.json({ message: `✅ Deleted answer key: "${key}"` });
       }
 
       res.status(404).json({ error: 'Key not found.' });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/profile
+  app.post('/api/profile', (req, res) => {
+    try {
+      const updated = saveProfile(req.body);
+      broadcastLog(`👤 [Candidate Profile Updated] Saved profile metrics.`);
+
+      let resumeText = '';
+      const cvPath = path.join(process.cwd(), 'cv.md');
+      if (fs.existsSync(cvPath)) {
+        try { resumeText = fs.readFileSync(cvPath, 'utf8'); } catch (e) {}
+      }
+
+      syncCandidateProfileToFirebase(updated, resumeText).catch(() => null);
+      res.json({ success: true, profile: updated });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/resume/upload - PDF Resume Parser & Text Extractor for Gemini AI & Firebase
+  app.post('/api/resume/upload', async (req, res) => {
+    try {
+      const { base64Data, filename } = req.body;
+      if (!base64Data) {
+        return res.status(400).json({ error: 'No base64 PDF data provided.' });
+      }
+
+      const pdfBuffer = Buffer.from(base64Data, 'base64');
+      const pdfData = await pdfParse(pdfBuffer);
+      const extractedText = pdfData.text || '';
+
+      if (!extractedText.trim()) {
+        return res.status(400).json({ error: 'Could not extract text from PDF.' });
+      }
+
+      // 1. Save extracted text to local cv.md for Gemini AI Evaluator
+      const cvPath = path.join(process.cwd(), 'cv.md');
+      fs.writeFileSync(cvPath, extractedText, 'utf8');
+      broadcastLog(`📄 [Resume Parsed] Extracted ${extractedText.length} chars from PDF resume and saved to cv.md`);
+
+      // 2. Save PDF file locally for LinkedIn Easy Apply auto-upload
+      const savedPdfPath = path.join(process.cwd(), 'resume.pdf');
+      fs.writeFileSync(savedPdfPath, pdfBuffer);
+
+      // 3. Update candidate profile config
+      const updatedProfile = saveProfile({ resumePath: savedPdfPath, resumeUploadPath: savedPdfPath });
+
+      // 4. Sync parsed resume text & candidate profile to Firebase Firestore 'candidate_profile' collection
+      await syncCandidateProfileToFirebase(updatedProfile, extractedText);
+
+      res.json({
+        success: true,
+        message: `✅ PDF Resume parsed successfully (${pdfData.numpages} pages, ${extractedText.length} characters extracted)!`,
+        extractedTextSnippet: extractedText.substring(0, 300) + '...'
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: `Failed to parse PDF resume: ${err.message}` });
     }
   });
 

@@ -111,3 +111,133 @@ export async function deleteJobFromFirebase(externalJobId: string): Promise<bool
     return false;
   }
 }
+
+/**
+ * Syncs a Q&A pair to Firebase Firestore 'answers' collection
+ */
+export async function syncAnswerToFirebase(question: string, answer: string): Promise<boolean> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return false;
+
+  try {
+    const docId = Buffer.from(question.toLowerCase().trim()).toString('hex').substring(0, 50);
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/answers/${docId}`;
+
+    const bodyData = JSON.stringify({
+      fields: {
+        question: { stringValue: question },
+        answer: { stringValue: answer },
+        updated_at: { stringValue: new Date().toISOString() }
+      }
+    });
+
+    await new Promise((resolve) => {
+      const req = https.request(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(bodyData)
+        }
+      }, (res) => resolve(res.statusCode && res.statusCode < 300));
+      req.on('error', () => resolve(false));
+      req.write(bodyData);
+      req.end();
+    });
+
+    return true;
+  } catch (err: any) {
+    return false;
+  }
+}
+
+/**
+ * Deletes a Q&A pair from Firebase Firestore 'answers' collection
+ */
+export async function deleteAnswerFromFirebase(question: string): Promise<boolean> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return false;
+
+  try {
+    const docId = Buffer.from(question.toLowerCase().trim()).toString('hex').substring(0, 50);
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/answers/${docId}`;
+
+    await new Promise((resolve) => {
+      const req = https.request(url, { method: 'DELETE' }, (res) => resolve(res.statusCode && res.statusCode < 300));
+      req.on('error', () => resolve(false));
+      req.end();
+    });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Syncs candidate profile and parsed resume text to Firebase Firestore 'candidate_profile' collection
+ */
+export async function syncCandidateProfileToFirebase(profileData: any, parsedResumeText: string = ''): Promise<boolean> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return false;
+
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/candidate_profile/details`;
+
+    const bodyData = JSON.stringify({
+      fields: {
+        name: { stringValue: profileData.name || '' },
+        email: { stringValue: profileData.email || '' },
+        phone: { stringValue: profileData.phone || '' },
+        totalYoe: { doubleValue: Number(profileData.totalYoe || 0) },
+        relevantYoe: { doubleValue: Number(profileData.relevantYoe || 0) },
+        currentCtcLpa: { doubleValue: Number(profileData.currentCtcLpa || 0) },
+        expectedCtcLpa: { doubleValue: Number(profileData.expectedCtcLpa || 0) },
+        noticePeriodDays: { integerValue: String(profileData.noticePeriodDays || 15) },
+        location: { stringValue: profileData.location || '' },
+        currentCompany: { stringValue: profileData.currentCompany || '' },
+        resume_text: { stringValue: parsedResumeText || '' },
+        updated_at: { stringValue: new Date().toISOString() }
+      }
+    });
+
+    await new Promise((resolve) => {
+      const req = https.request(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(bodyData)
+        }
+      }, (res) => resolve(res.statusCode && res.statusCode < 300));
+      req.on('error', () => resolve(false));
+      req.write(bodyData);
+      req.end();
+    });
+
+    return true;
+  } catch (err: any) {
+    return false;
+  }
+}
+
+export async function syncAllAnswersToFirebase(): Promise<number> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return 0;
+
+  const fs = require('fs');
+  const path = require('path');
+  const answersPath = path.join(process.cwd(), 'answers.json');
+  if (!fs.existsSync(answersPath)) return 0;
+
+  try {
+    const cache = JSON.parse(fs.readFileSync(answersPath, 'utf8'));
+    let synced = 0;
+    for (const [q, a] of Object.entries(cache)) {
+      const ok = await syncAnswerToFirebase(q, String(a));
+      if (ok) synced++;
+    }
+    console.log(`🧠 [Firebase Sync] Synced ${synced} Q&A knowledge base entries to Firestore.`);
+    return synced;
+  } catch {
+    return 0;
+  }
+}

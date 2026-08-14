@@ -1382,6 +1382,12 @@
           </div>
         </div>
 
+        <div class="form-group" style="margin-top: 12px; padding: 12px; background: #F4F4F5; border: 1px dashed #D4D4D8; border-radius: 8px;">
+          <label style="color: #000; font-weight: 800;"><i class="fa-solid fa-file-pdf" style="color: #EF4444;"></i> Upload & Parse Resume (PDF)</label>
+          <input type="file" id="form-resume-pdf" accept=".pdf" class="input-field" style="padding: 6px; font-size: 12px; height: auto;" onchange="handleResumePdfUpload(event)">
+          <span id="resume-upload-status" style="font-size: 11px; color: #4F46E5; font-weight: 600; display: block; margin-top: 4px;">Select PDF resume to parse text for Gemini AI & Firebase</span>
+        </div>
+
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
           <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Profile</button>
@@ -1532,29 +1538,69 @@
       }
     }
 
+    async function handleResumePdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('resume-upload-status');
+      statusEl.innerText = '⏳ Extracting text from PDF resume...';
+
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const base64Data = reader.result.split(',')[1];
+        try {
+          const res = await fetch('/api/resume/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64Data, filename: file.name })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            statusEl.innerText = '✅ PDF Parsed & Synced to Firebase!';
+            showToast(data.message, 'success');
+            loadDashboardData();
+          } else {
+            statusEl.innerText = '❌ Parsing failed: ' + (data.error || 'Unknown error');
+            showToast(data.error || 'Resume upload failed', 'error');
+          }
+        } catch (e) {
+          statusEl.innerText = '❌ Upload error';
+          showToast('Resume upload failed', 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderAnswersUI(answers) {
+      const container = document.getElementById('qa-container');
+      if (!container) return;
+      
+      const keys = Object.keys(answers || {});
+      if (keys.length === 0) {
+        container.innerHTML = `<p style="font-size:12px; color: var(--text-dim); text-align: center; padding: 20px;">No cached AI answers yet.</p>`;
+        return;
+      }
+
+      container.innerHTML = keys.slice(0, 25).map(k => `
+        <div class="qa-item">
+          <div class="qa-content">
+            <div class="qa-question">${k}</div>
+            <div class="qa-answer">➔ ${answers[k]}</div>
+          </div>
+          <button class="btn-icon btn-danger" style="width: 26px; height: 26px; font-size: 10px;" onclick="deleteAnswer('${encodeURIComponent(k)}')">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
     async function loadAnswers() {
       try {
-        const res = await fetch('/api/answers');
-        const answers = await res.json();
-        const container = document.getElementById('qa-container');
-        
-        const keys = Object.keys(answers);
-        if (keys.length === 0) {
-          container.innerHTML = `<p style="font-size:12px; color: var(--text-dim); text-align: center; padding: 20px;">No cached AI answers yet.</p>`;
-          return;
+        const res = await fetch('/api/answers').catch(() => null);
+        if (res && res.ok) {
+          const answers = await res.json();
+          renderAnswersUI(answers);
         }
-
-        container.innerHTML = keys.slice(0, 15).map(k => `
-          <div class="qa-item">
-            <div class="qa-content">
-              <div class="qa-question">${k}</div>
-              <div class="qa-answer">➔ ${answers[k]}</div>
-            </div>
-            <button class="btn-icon btn-danger" style="width: 26px; height: 26px; font-size: 10px;" onclick="deleteAnswer('${encodeURIComponent(k)}')">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        `).join('');
       } catch (e) {}
     }
 
@@ -1891,6 +1937,36 @@
             filterJobs();
           }
         }
+      });
+
+      // 2. Real-time Firebase Listener for 'answers' collection (AI Knowledge Base)
+      onSnapshot(collection(db, "answers"), (snapshot) => {
+        const firestoreAnswers = {};
+        snapshot.forEach((doc) => {
+          const d = doc.data();
+          if (d.question && d.answer !== undefined) {
+            firestoreAnswers[d.question.toLowerCase().trim()] = d.answer;
+          }
+        });
+
+        if (Object.keys(firestoreAnswers).length > 0) {
+          if (typeof renderAnswersUI === 'function') {
+            renderAnswersUI(firestoreAnswers);
+          }
+        }
+      });
+
+      // 3. Real-time Firebase Listener for 'candidate_profile' collection
+      onSnapshot(collection(db, "candidate_profile"), (snapshot) => {
+        snapshot.forEach((doc) => {
+          if (doc.id === 'details') {
+            const profData = doc.data();
+            currentProfile = profData;
+            if (typeof renderProfileUI === 'function') {
+              renderProfileUI();
+            }
+          }
+        });
       });
     } catch (err) {
       console.warn("Firebase Live Sync Note:", err);
