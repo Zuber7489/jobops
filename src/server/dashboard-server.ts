@@ -114,7 +114,19 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
-  // DELETE /api/jobs/:id
+  // DELETE /api/jobs - Bulk clear all job records
+  app.delete('/api/jobs', (req, res) => {
+    try {
+      const db = getDb();
+      const info = db.prepare(`DELETE FROM jobs`).run();
+      broadcastLog(`🗑️ [Database Cleared] Removed all ${info.changes} job records.`);
+      res.json({ success: true, deletedCount: info.changes, message: `🗑️ Cleared all ${info.changes} job records!` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/jobs/:id - Delete single job
   app.delete('/api/jobs/:id', (req, res) => {
     try {
       const db = getDb();
