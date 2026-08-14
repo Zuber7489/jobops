@@ -62,3 +62,21 @@ export async function syncJobToFirebase(job: JobRecord): Promise<boolean> {
     return false;
   }
 }
+
+export async function syncAllExistingJobsToFirebase(): Promise<number> {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  if (!projectId) return 0;
+
+  const { getDb } = require('../db/schema');
+  const db = getDb();
+  const allJobs: JobRecord[] = db.prepare(`SELECT * FROM jobs`).all() as JobRecord[];
+
+  console.log(`🔥 [Firebase Sync] Syncing ${allJobs.length} existing local jobs to Firestore...`);
+  let synced = 0;
+  for (const j of allJobs) {
+    const success = await syncJobToFirebase(j);
+    if (success) synced++;
+  }
+  console.log(`✅ [Firebase Sync] Successfully synced ${synced}/${allJobs.length} jobs to Firebase Firestore.`);
+  return synced;
+}
