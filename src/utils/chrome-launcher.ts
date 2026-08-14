@@ -51,20 +51,15 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
     fs.mkdirSync(userDataDir, { recursive: true });
   }
 
-  if (process.platform === 'win32') {
-    const cmdStr = `start "" "${chromePath}" --remote-debugging-port=${port} --user-data-dir="${userDataDir}" "https://www.linkedin.com"`;
-    spawn('cmd.exe', ['/c', cmdStr], { detached: true, stdio: 'ignore' }).unref();
-  } else {
-    const child = spawn(chromePath, [
-      `--remote-debugging-port=${port}`,
-      `--user-data-dir=${userDataDir}`,
-      'https://www.linkedin.com'
-    ], {
-      detached: true,
-      stdio: 'ignore'
-    });
-    child.unref();
-  }
+  const child = spawn(chromePath, [
+    `--remote-debugging-port=${port}`,
+    `--user-data-dir=${userDataDir}`,
+    'https://www.linkedin.com'
+  ], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  child.unref();
 
   // Wait up to 5 seconds for port 9222 to become active
   for (let i = 0; i < 10; i++) {
