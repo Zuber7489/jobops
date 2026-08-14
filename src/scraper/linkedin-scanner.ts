@@ -54,16 +54,19 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       return [];
     }
 
+    // Set fast default timeout (5s max per operation) so missing elements don't hang
+    page.setDefaultTimeout(5000);
+
     for (let pageNum = 0; pageNum < maxPages; pageNum++) {
       const pageUrl = `${baseUrl}&start=${pageNum * 25}`;
       console.log(`🌐 Navigating to LinkedIn Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      // Random delay to appear human (2.5s – 5s)
-      await page.waitForTimeout(2500 + Math.floor(Math.random() * 2500));
+      // Random delay to appear human (2.5s – 4s)
+      await page.waitForTimeout(2500 + Math.floor(Math.random() * 1500));
 
-      // Select job card containers
-      const jobCards = page.locator('ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
+      // Select job card containers (handles both authenticated & guest LinkedIn layouts)
+      const jobCards = page.locator('li.jobs-search-results__list-item, ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
       const count = await jobCards.count();
 
       console.log(`📌 Found ${count} job cards on Page ${pageNum + 1}`);
@@ -77,7 +80,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       for (let i = 0; i < count; i++) {
         try {
           const card = jobCards.nth(i);
-          const cardText = (await card.textContent().catch(() => '')) || '';
+          const cardText = (await card.textContent({ timeout: 1000 }).catch(() => '')) || '';
 
           // In public guest mode without CDP, verify card has "Easy Apply" badge
           // In authenticated CDP mode, LinkedIn's f_AL=true filter is reliable — skip badge check
@@ -89,25 +92,25 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
             }
           }
 
-          // Extract link & URL
-          const linkEl = card.locator('a.base-card__full-link, a.job-card-container__link, a[href*="/jobs/view/"]').first();
-          const url = (await linkEl.getAttribute('href').catch(() => '')) || '';
+          // Extract link & URL (short 1s timeout to avoid hangs)
+          const linkEl = card.locator('a.job-card-container__link, a.job-card-list__title, a.base-card__full-link, a[href*="/jobs/view/"]').first();
+          const url = (await linkEl.getAttribute('href', { timeout: 1000 }).catch(() => '')) || '';
 
           // Extract title
-          const titleEl = card.locator('h3.base-search-card__title, h3, a.job-card-list__title, span.sr-only').first();
-          let title = (await titleEl.textContent().catch(() => ''))?.trim() || '';
+          const titleEl = card.locator('a.job-card-list__title, h3.base-search-card__title, h3, span.sr-only').first();
+          let title = (await titleEl.textContent({ timeout: 1000 }).catch(() => ''))?.trim() || '';
 
           if (!title && linkEl) {
-            title = (await linkEl.textContent().catch(() => ''))?.trim() || '';
+            title = (await linkEl.textContent({ timeout: 1000 }).catch(() => ''))?.trim() || '';
           }
 
           // Extract company
-          const companyEl = card.locator('h4.base-search-card__subtitle, a.hidden-nested-link, h4').first();
-          const company = (await companyEl.textContent().catch(() => ''))?.trim() || 'Unknown Company';
+          const companyEl = card.locator('div.artdeco-entity-lockup__subtitle, span.job-card-container__primary-description, a.job-card-container__company-name, .job-card-container__company-name, h4.base-search-card__subtitle, a.hidden-nested-link, h4').first();
+          const company = (await companyEl.textContent({ timeout: 1000 }).catch(() => ''))?.trim() || 'Unknown Company';
 
           // Extract location
-          const locEl = card.locator('span.job-search-card__location, span.job-result-card__location').first();
-          const locText = (await locEl.textContent().catch(() => ''))?.trim() || location;
+          const locEl = card.locator('ul.job-card-container__metadata-wrapper, span.job-search-card__location, span.job-result-card__location').first();
+          const locText = (await locEl.textContent({ timeout: 1000 }).catch(() => ''))?.trim() || location;
 
           // Skip if missing critical info
           if (!url && !title) continue;

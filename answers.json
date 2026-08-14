@@ -49,5 +49,20 @@
   "are you currently in pune": "Yes",
   "are you legally authorized to work in india": "Yes",
   "do you require visa sponsorship": "No",
-  "are you visa independent's or interested in h1 transfer?": "No"
+  "are you visa independent's or interested in h1 transfer?": "No",
+  "please select your total years of professional experience:": "3",
+  "please select your total additional months of experience:": "24",
+  "how many years of professional frontend development experience do you have?": "3",
+  "do you have strong hands-on experience with html5, css3, and modern javascript (es6+)?": "Yes",
+  "do you have hands-on professional experience with react, next.js, or vue.js?": "0",
+  "do you have hands-on experience integrating frontend components into an enterprise cms such as adobe experience manager (aem), sitecore, contentful, storyblok, or wordpress?": "No",
+  "do you have hands-on adobe experience manager (aem) frontend development experience?": "0",
+  "do you have experience translating figma or similar designs into responsive, production-ready frontend code?": "Yes",
+  "do you have experience consuming rest and/or graphql apis from frontend applications?": "Yes",
+  "how many years of work experience do you have with nuxt.js?": "0",
+  "how many years of work experience do you have with wordpress?": "0",
+  "wha is your ctc?": "320000",
+  "what is your np? mention in days 0-15?": "15",
+  "are you comfortable in relocating to coimbatore?": "Yes",
+  "we have budget of upto 8l, if interested apply": "Yes"
 }
