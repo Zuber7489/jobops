@@ -1263,7 +1263,7 @@
               <div class="profile-avatar" id="prof-initials">MZ</div>
               <div class="profile-info">
                 <h3 id="prof-name">Candidate Name</h3>
-                <p id="prof-headline"><i class="fa-solid fa-location-dot"></i> Pune, India</p>
+                <p id="prof-headline"><i class="fa-solid fa-location-dot"></i> Indore, Madhya Pradesh, India</p>
               </div>
             </div>
             <button class="btn-icon" onclick="openProfileModal()" title="Edit Profile">
@@ -1523,7 +1523,7 @@
     function renderProfileUI() {
       if (currentProfile) {
         document.getElementById('prof-name').innerText = currentProfile.name || 'Candidate Name';
-        document.getElementById('prof-headline').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentProfile.location || 'Pune'}, India`;
+        document.getElementById('prof-headline').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentProfile.location || 'Indore, Madhya Pradesh'}, India`;
         document.getElementById('prof-yoe').innerText = `${currentProfile.totalYoe || 2.5} Years`;
         document.getElementById('prof-np').innerText = `${currentProfile.noticePeriodDays || 15} Days`;
         document.getElementById('prof-c-ctc').innerText = `${currentProfile.currentCtcLpa || 3.2} LPA`;
@@ -1725,7 +1725,7 @@
         document.getElementById('form-np').value = currentProfile.noticePeriodDays || 15;
         document.getElementById('form-c-ctc').value = currentProfile.currentCtcLpa || 3.2;
         document.getElementById('form-e-ctc').value = currentProfile.expectedCtcLpa || 6.5;
-        document.getElementById('form-location').value = currentProfile.location || 'Pune';
+        document.getElementById('form-location').value = currentProfile.location || 'Indore, Madhya Pradesh';
         document.getElementById('form-company').value = currentProfile.currentCompany || '';
       }
       document.getElementById('profile-modal').classList.add('open');

@@ -169,7 +169,7 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     return profile.email;
   }
   if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
-    return 'Pune';
+    return profile.location || 'Indore, Madhya Pradesh';
   }
 
   // Current Compensation / CTC / Salary / Package
@@ -275,7 +275,7 @@ Instructions & Response Rules:
       aiAnswer = '0';
     } else if (qLower.includes('sponsorship') || qLower.includes('visa')) {
       aiAnswer = 'No';
-    } else if (qLower.includes('authorized') || qLower.includes('commuting') || qLower.includes('pune')) {
+    } else if (qLower.includes('authorized') || qLower.includes('commuting') || qLower.includes('pune') || qLower.includes('indore')) {
       aiAnswer = 'Yes';
     } else {
       aiAnswer = Math.floor(profile.totalYoe).toString();

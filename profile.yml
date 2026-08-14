@@ -8,7 +8,7 @@ relevantYoe: 2.5
 currentCtcLpa: 3.2
 expectedCtcLpa: 6.5
 noticePeriodDays: 15
-location: Pune
+location: Indore, Madhya Pradesh
 skills:
   - Angular
   - Angular SSR

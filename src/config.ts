@@ -49,7 +49,7 @@ export function loadProfile(profilePath: string = path.join(process.cwd(), 'prof
       currentCtcLpa: 15,
       expectedCtcLpa: 20,
       noticePeriodDays: 30,
-      location: 'Pune',
+      location: 'Indore, Madhya Pradesh',
       skills: ['Angular', 'RxJS', 'NgRx', 'TypeScript', 'Signals', 'JavaScript', 'HTML', 'CSS'],
       resumePath: path.join(process.cwd(), 'resume.pdf')
     };
