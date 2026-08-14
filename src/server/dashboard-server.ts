@@ -2,14 +2,16 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { getDb } from '../db/schema';
-import { loadProfile } from '../config';
+import { loadProfile, saveProfile } from '../config';
 import { evaluateJobs } from '../engine/evaluator';
 import { scanLinkedInJobs } from '../scraper/linkedin-scanner';
 
 export function startDashboardServer(port: number = 3000) {
   const app = express();
 
-  app.use(express.json());
+  // Allow up to 50MB for PDF resume base64 uploads
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.use(express.static(path.join(process.cwd(), 'public')));
 
   // GET /api/stats
@@ -66,6 +68,71 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
+  // POST /api/profile - Save candidate profile updates
+  app.post('/api/profile', (req, res) => {
+    try {
+      const updatedProfile = saveProfile(req.body);
+      
+      // Update answers.json defaults for basic candidate info
+      const answersPath = path.join(process.cwd(), 'answers.json');
+      let cache: Record<string, string> = {};
+      if (fs.existsSync(answersPath)) {
+        try { cache = JSON.parse(fs.readFileSync(answersPath, 'utf8')); } catch (e) {}
+      }
+
+      cache['full name'] = updatedProfile.name;
+      cache['first name'] = updatedProfile.name.split(' ')[0] || updatedProfile.name;
+      cache['last name'] = updatedProfile.name.split(' ').slice(1).join(' ') || '';
+      cache['email address'] = updatedProfile.email;
+      cache['mobile phone number'] = updatedProfile.phone;
+      cache['phone number'] = updatedProfile.phone;
+      cache['city'] = updatedProfile.location;
+      cache['location (city)'] = updatedProfile.location;
+      cache['notice period'] = updatedProfile.noticePeriodDays.toString();
+      cache['current ctc'] = (updatedProfile.currentCtcLpa * 100000).toString();
+      cache['expected ctc'] = (updatedProfile.expectedCtcLpa * 100000).toString();
+      cache['total years of professional experience'] = Math.floor(updatedProfile.totalYoe).toString();
+      cache['what is your total years of experience?'] = Math.floor(updatedProfile.totalYoe).toString();
+      if (updatedProfile.currentCompany) {
+        cache['current company'] = updatedProfile.currentCompany;
+      }
+
+      fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
+
+      res.json({ message: '✅ Candidate Profile & AI Knowledge Base updated successfully!', profile: updatedProfile });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/resume - Handle PDF Resume upload
+  app.post('/api/resume', (req, res) => {
+    try {
+      const { fileName, fileData } = req.body; // base64 string
+      if (!fileData) {
+        return res.status(400).json({ error: 'No resume file data provided.' });
+      }
+
+      // Convert base64 to binary buffer
+      const base64Data = fileData.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      const resumePdfPath = path.join(process.cwd(), 'resume.pdf');
+      fs.writeFileSync(resumePdfPath, buffer);
+
+      // Save resumePath in profile.yml
+      const profile = saveProfile({
+        resumePath: resumePdfPath,
+        resumeUploadPath: resumePdfPath
+      });
+
+      console.log(`📄 [Resume Uploaded] Saved new resume PDF (${buffer.length} bytes) to ${resumePdfPath}`);
+      res.json({ message: '✅ PDF Resume uploaded & set for AI Form Solver!', resumePath: resumePdfPath });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // GET /api/answers
   app.get('/api/answers', (req, res) => {
     try {
@@ -80,18 +147,68 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
+  // POST /api/answers - Add or update custom Q&A answer
+  app.post('/api/answers', (req, res) => {
+    try {
+      const { question, answer } = req.body;
+      if (!question || answer === undefined) {
+        return res.status(400).json({ error: 'Question and Answer fields are required.' });
+      }
+
+      const answersPath = path.join(process.cwd(), 'answers.json');
+      let cache: Record<string, string> = {};
+      if (fs.existsSync(answersPath)) {
+        try { cache = JSON.parse(fs.readFileSync(answersPath, 'utf8')); } catch (e) {}
+      }
+
+      const normalizedKey = question.toLowerCase().trim();
+      cache[normalizedKey] = answer.toString();
+
+      fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
+      res.json({ message: `✅ Saved answer for "${question}" ➔ "${answer}"`, cache });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/answers/:key
+  app.delete('/api/answers/:key', (req, res) => {
+    try {
+      const key = decodeURIComponent(req.params.key).toLowerCase().trim();
+      const answersPath = path.join(process.cwd(), 'answers.json');
+      let cache: Record<string, string> = {};
+      if (fs.existsSync(answersPath)) {
+        try { cache = JSON.parse(fs.readFileSync(answersPath, 'utf8')); } catch (e) {}
+      }
+
+      if (cache[key] !== undefined) {
+        delete cache[key];
+        fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
+        return res.json({ message: `✅ Deleted answer key: "${key}"` });
+      }
+
+      res.status(404).json({ error: 'Key not found in AI cache.' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // POST /api/scan
   app.post('/api/scan', async (req, res) => {
     try {
+      const query = req.body.query || 'Angular Developer';
+      const location = req.body.location || 'India';
+      const maxPages = req.body.pages ? parseInt(req.body.pages, 10) : 3;
+
       scanLinkedInJobs({
-        query: 'Angular Developer',
-        location: 'India',
-        maxPages: 3,
+        query,
+        location,
+        maxPages,
         headless: true,
         timePosted: 'r86400'
       }).catch(err => console.error('Background Scan Error:', err));
 
-      res.json({ message: '🚀 LinkedIn 24-hour scan launched in background!' });
+      res.json({ message: `🚀 LinkedIn 24-hour scan launched for "${query}" in "${location}"!` });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

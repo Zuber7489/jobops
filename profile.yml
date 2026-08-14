@@ -1,33 +1,31 @@
-name: "Mohammad Zuber"
-email: "zuber.shaikh.7415@gmail.com"
+name: Mohammad Zuber
+email: zuber.shaikh.7415@gmail.com
 phone: "+917489898481"
-linkedin: "https://www.linkedin.com/in/mohammadzuber/"
-currentCompany: "Growhut Technologies"
+linkedin: https://www.linkedin.com/in/mohammadzuber/
+currentCompany: Growhut Technologies
 totalYoe: 2.5
 relevantYoe: 2.5
 currentCtcLpa: 3.2
 expectedCtcLpa: 6.5
 noticePeriodDays: 15
-location: "Pune"
+location: Pune
 skills:
-  - "Angular"
-  - "Angular SSR"
-  - "Angular Signals"
-  - "Standalone Components"
-  - "TypeScript"
-  - "RxJS"
-  - "Reactive Forms"
-  - "REST APIs"
-  - "JWT"
-  - "Route Guards"
-  - "Interceptors"
-  - "Angular Material"
-  - "Bootstrap"
-  - "SCSS"
-  - "HTML5"
-  - "CSS3"
-  - "Git"
-resumePath: "./cv.md"
-# Place your PDF resume here and update the path below for auto-upload:
-resumeUploadPath: "./resume.pdf"
-
+  - Angular
+  - Angular SSR
+  - Angular Signals
+  - Standalone Components
+  - TypeScript
+  - RxJS
+  - Reactive Forms
+  - REST APIs
+  - JWT
+  - Route Guards
+  - Interceptors
+  - Angular Material
+  - Bootstrap
+  - SCSS
+  - HTML5
+  - CSS3
+  - Git
+resumePath: ./cv.md
+resumeUploadPath: ./resume.pdf

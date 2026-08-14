@@ -18,6 +18,7 @@ export interface UserProfile {
   skills: string[];
   resumePath: string;
   resumeUploadPath?: string; // Optional: Path to PDF resume for auto-upload on LinkedIn Easy Apply
+  currentCompany?: string;
 }
 
 export const CONFIG = {
@@ -49,4 +50,11 @@ export function loadProfile(profilePath: string = path.join(process.cwd(), 'prof
 
   const fileContent = fs.readFileSync(profilePath, 'utf8');
   return yaml.parse(fileContent) as UserProfile;
+}
+
+export function saveProfile(updatedFields: Partial<UserProfile>, profilePath: string = path.join(process.cwd(), 'profile.yml')): UserProfile {
+  const currentProfile = loadProfile(profilePath);
+  const newProfile = { ...currentProfile, ...updatedFields };
+  fs.writeFileSync(profilePath, yaml.stringify(newProfile), 'utf8');
+  return newProfile;
 }
