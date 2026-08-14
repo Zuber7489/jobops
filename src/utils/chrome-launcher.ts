@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { chromium } from 'playwright';
 
 export function isChromeCdpRunning(port: number = 9222): Promise<boolean> {
   return new Promise((resolve) => {
@@ -39,40 +40,39 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
   }
 
   const chromePath = findChromePath();
-  if (!chromePath) {
-    console.warn(`⚠️ [Chrome Launcher] Chrome executable not found in default system paths.`);
-    return false;
-  }
-
-  console.log(`🚀 [Chrome Launcher] Launching Chrome with --remote-debugging-port=${port}...`);
-  
   const userDataDir = path.join(process.cwd(), '.chrome-user-data');
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }
 
-  try {
-    const child = spawn(chromePath, [
-      `--remote-debugging-port=${port}`,
-      `--user-data-dir=${userDataDir}`,
-      '--start-maximized',
-      '--new-window',
-      'https://www.linkedin.com'
-    ], {
-      detached: true,
-      stdio: 'ignore'
-    });
-    child.unref();
+  console.log(`🚀 [Chrome Launcher] Opening visible Chrome window on port ${port}...`);
 
-    // Wait up to 3 seconds for port 9222 to respond
+  try {
+    if (chromePath) {
+      spawn(chromePath, [
+        `--remote-debugging-port=${port}`,
+        `--user-data-dir=${userDataDir}`,
+        '--start-maximized',
+        '--new-window',
+        'https://www.linkedin.com'
+      ], { detached: true, stdio: 'ignore' }).unref();
+    } else {
+      await chromium.launchPersistentContext(userDataDir, {
+        headless: false,
+        args: [`--remote-debugging-port=${port}`, '--start-maximized'],
+        viewport: null
+      });
+    }
+
     for (let i = 0; i < 6; i++) {
       await new Promise(r => setTimeout(r, 500));
       if (await isChromeCdpRunning(port)) {
-        console.log(`✅ [Chrome Launcher] Chrome launched successfully on port ${port}`);
+        console.log(`✅ [Chrome Launcher] Visible Chrome window opened on port ${port}`);
         return true;
       }
     }
-    return true; // Return true as child process was initiated
+
+    return true;
   } catch (e: any) {
     console.error(`❌ [Chrome Launcher Error]: ${e.message}`);
     return false;
