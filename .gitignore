@@ -19,6 +19,7 @@ jobops.sqlite
 # Chrome user session data
 .chrome-user-data/
 .chrome-session/
+chrome_debug_profile/
 
 # Logs & Temporary Files
 *.log
