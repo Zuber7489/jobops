@@ -168,13 +168,14 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       console.log(`✅ Connected to active Chrome session!`);
       await page.bringToFront().catch(() => null);
     } catch (cdpErr) {
-      console.log(`🌐 CDP session not detected. Launching visible browser window for auto-apply...`);
-      const standaloneBrowser = await chromium.launch({
+      console.log(`🌐 CDP session not detected. Launching persistent visible browser window for auto-apply...`);
+      const userDataDir = path.resolve(process.cwd(), '.chrome-user-data');
+      browserContext = await chromium.launchPersistentContext(userDataDir, {
         headless: false,
-        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized']
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized'],
+        viewport: null
       });
-      browserContext = await standaloneBrowser.newContext({ viewport: null });
-      page = await browserContext.newPage();
+      page = browserContext.pages()[0] || await browserContext.newPage();
     }
 
     // Extract numeric job ID if present

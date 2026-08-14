@@ -1,4 +1,5 @@
 import { chromium, BrowserContext, Page } from 'playwright';
+import path from 'path';
 import { saveJobRecord, JobRecord } from '../db/schema';
 import { CONFIG } from '../config';
 
@@ -38,17 +39,15 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       console.log(`✅ [LinkedIn Scanner] Using active Chrome session on CDP port ${CONFIG.cdpPort}`);
       await page.bringToFront().catch(() => null);
     } catch {
-      console.log(`🌐 [LinkedIn Scanner] Opening visible browser window for job scan...`);
-      standaloneBrowser = await chromium.launch({
+      console.log(`🌐 [LinkedIn Scanner] Launching persistent visible browser window...`);
+      const userDataDir = path.resolve(process.cwd(), '.chrome-user-data');
+      browserContext = await chromium.launchPersistentContext(userDataDir, {
         headless: false,
-        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized']
-      });
-      browserContext = await standaloneBrowser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized'],
         viewport: null
       });
-      if (browserContext) page = await browserContext.newPage();
-      console.log(`🌐 [LinkedIn Scanner] Running in standalone web browser context`);
+      page = browserContext.pages()[0] || await browserContext.newPage();
+      console.log(`🌐 [LinkedIn Scanner] Running in persistent visible browser context`);
     }
 
     if (!page) {
