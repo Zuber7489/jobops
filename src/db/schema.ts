@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 import { CONFIG } from '../config';
-import { syncJobToSupabase } from './supabase';
 
 export interface JobRecord {
   id?: number;
@@ -85,8 +84,7 @@ export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number
 
   const info = stmt.run(recordToInsert);
 
-  // Cloud sync to Supabase & static JSON export for Netlify live app
-  syncJobToSupabase(recordToInsert).catch(() => null);
+  // Static JSON export for Netlify live app
   exportJobsToJson();
 
   return info.lastInsertRowid as number;
@@ -110,9 +108,5 @@ export function updateJobStatus(externalJobId: string, status: JobRecord['status
     UPDATE jobs SET status = ?, applied_at = CURRENT_TIMESTAMP WHERE external_job_id = ?
   `).run(status, externalJobId);
 
-  const updatedJob = db.prepare(`SELECT * FROM jobs WHERE external_job_id = ?`).get(externalJobId);
-  if (updatedJob) {
-    syncJobToSupabase(updatedJob).catch(() => null);
-  }
   exportJobsToJson();
 }

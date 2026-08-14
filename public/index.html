@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     :root {
@@ -1143,13 +1142,6 @@
       consoleEl.innerHTML = '<div class="terminal-line">[System] Terminal console cleared.</div>';
     }
 
-    const SUPABASE_URL = 'https://kiufbkzgwbiapvfkvcr.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpdWZia3pnd2JraWFwdmZrdmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDEwMTcsImV4cCI6MjEwMjI3NzAxN30.rDjRWyucwcidW36qJyUA5W1KR_ggvqZxdTRSn6jFGqw';
-    let supabaseClient = null;
-    if (window.supabase) {
-      try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch (e) {}
-    }
-
     async function loadDashboardData() {
       try {
         const statsRes = await fetch('/api/stats').catch(() => null);
@@ -1177,15 +1169,9 @@
         } else {
           // Cloud Direct Fallback for Netlify hosted web app (loads public/jobs.json)
           let jobs = null;
-          if (supabaseClient) {
-            const { data } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false }).catch(() => ({ data: null }));
-            jobs = data;
-          }
-          if (!jobs || jobs.length === 0) {
-            const fallbackRes = await fetch('./jobs.json').catch(() => null);
-            if (fallbackRes && fallbackRes.ok) {
-              jobs = await fallbackRes.json();
-            }
+          const fallbackRes = await fetch('./jobs.json').catch(() => null);
+          if (fallbackRes && fallbackRes.ok) {
+            jobs = await fallbackRes.json();
           }
 
           if (jobs && jobs.length > 0) {
