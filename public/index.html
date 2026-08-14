@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JobOps AI — Multi-User Candidate & Resume Portal</title>
+  <title>JobOps AI — Live Automation & Terminal Control Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     :root {
@@ -179,6 +180,36 @@
       transform: translateY(-2px);
     }
 
+    /* Action Trigger Workflow Bar */
+    .pipeline-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #F4F4F5;
+      border: 1px solid #E4E4E7;
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .pipeline-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pipeline-steps {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     /* Stats Grid */
     .stats-grid {
       display: grid;
@@ -259,6 +290,7 @@
       display: grid;
       grid-template-columns: 1fr 360px;
       gap: 32px;
+      margin-bottom: 32px;
     }
 
     @media (max-width: 1024px) {
@@ -582,6 +614,62 @@
       color: var(--text-dim);
     }
 
+    /* Live Terminal Console Panel */
+    .terminal-panel {
+      background: #09090B;
+      border: 1px solid #27272A;
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      color: #F4F4F5;
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #27272A;
+    }
+
+    .terminal-title {
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: #A1A1AA;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .terminal-title span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22C55E;
+      display: inline-block;
+      box-shadow: 0 0 8px #22C55E;
+    }
+
+    .terminal-console {
+      height: 280px;
+      overflow-y: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #E4E4E7;
+      background: #000000;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid #18181B;
+    }
+
+    .terminal-line {
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
     /* Q&A Knowledge Base Panel */
     .qa-item {
       padding: 12px;
@@ -663,19 +751,6 @@
       gap: 12px;
     }
 
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--text-dim);
-    }
-
-    .empty-state i {
-      font-size: 36px;
-      margin-bottom: 12px;
-      color: var(--text-dim);
-    }
-
     /* Notification Toast */
     #toast-container {
       position: fixed;
@@ -721,7 +796,7 @@
           <h1>JobOps Control Center</h1>
           <p>
             <span>LinkedIn & AI Automation Engine</span>
-            <span class="status-badge"><span class="status-dot"></span> Multi-User Portal</span>
+            <span class="status-badge"><span class="status-dot"></span> Live Log Streaming</span>
           </p>
         </div>
       </div>
@@ -730,17 +805,31 @@
         <button class="btn btn-secondary" onclick="openProfileModal()">
           <i class="fa-solid fa-user-gear"></i> Configure Candidate
         </button>
-        <button class="btn btn-secondary" onclick="runAction('/api/scan')">
-          <i class="fa-solid fa-magnifying-glass"></i> Scan Jobs (24h)
-        </button>
-        <button class="btn btn-secondary" onclick="runAction('/api/evaluate')">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Evaluate
-        </button>
-        <button class="btn btn-primary" onclick="runAction('/api/apply-all')">
-          <i class="fa-solid fa-paper-plane"></i> Auto-Apply Queue
+        <button class="btn btn-primary" onclick="runAction('/api/run-all')">
+          <i class="fa-solid fa-bolt"></i> Run Full Pipeline
         </button>
       </div>
     </header>
+
+    <!-- 3-Step Interactive Automation Pipeline Bar -->
+    <div class="pipeline-bar">
+      <div class="pipeline-title">
+        <i class="fa-solid fa-sliders"></i>
+        Automation Controls
+      </div>
+
+      <div class="pipeline-steps">
+        <button class="btn btn-secondary" onclick="runAction('/api/scan')">
+          <i class="fa-solid fa-magnifying-glass"></i> Step 1: Scan 24h Jobs
+        </button>
+        <button class="btn btn-secondary" onclick="runAction('/api/evaluate')">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Step 2: AI Evaluate
+        </button>
+        <button class="btn btn-primary" onclick="runAction('/api/apply-all')">
+          <i class="fa-solid fa-paper-plane"></i> Step 3: Auto-Apply Queue
+        </button>
+      </div>
+    </div>
 
     <!-- Top Key Metrics Grid -->
     <div class="stats-grid">
@@ -887,6 +976,26 @@
 
     </div>
 
+    <!-- Live Terminal Console Window -->
+    <div class="terminal-panel">
+      <div class="terminal-header">
+        <div class="terminal-title">
+          <span></span>
+          JobOps Live Terminal & Process Output Stream
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-icon" style="background: #18181B; color: #FFF; border-color: #27272A" onclick="clearTerminalConsole()" title="Clear Console">
+            <i class="fa-solid fa-eraser"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="terminal-console" class="terminal-console">
+        <div class="terminal-line">[System] Terminal console initialized. Connected to JobOps server.</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Candidate Profile Edit Modal -->
@@ -989,41 +1098,111 @@
     let currentFilter = 'all';
     let currentProfile = {};
 
+    /* Terminal Console & EventSource SSE Listener */
+    function initTerminalStream() {
+      fetch('/api/logs')
+        .then(res => res.json())
+        .then(data => {
+          if (data.logs) {
+            data.logs.forEach(appendTerminalLog);
+          }
+        }).catch(e => {});
+
+      const eventSource = new EventSource('/api/logs/stream');
+      eventSource.onmessage = function(event) {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.log) {
+            appendTerminalLog(payload.log);
+            loadDashboardData();
+          }
+        } catch (e) {}
+      };
+    }
+
+    function appendTerminalLog(logText) {
+      const consoleEl = document.getElementById('terminal-console');
+      const div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.innerText = logText;
+      consoleEl.appendChild(div);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function clearTerminalConsole() {
+      const consoleEl = document.getElementById('terminal-console');
+      consoleEl.innerHTML = '<div class="terminal-line">[System] Terminal console cleared.</div>';
+    }
+
+    const SUPABASE_URL = 'https://kiufbkzgwbiapvfkvcr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpdWZia3pnd2JraWFwdmZrdmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDEwMTcsImV4cCI6MjEwMjI3NzAxN30.rDjRWyucwcidW36qJyUA5W1KR_ggvqZxdTRSn6jFGqw';
+    let supabaseClient = null;
+    if (window.supabase) {
+      try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch (e) {}
+    }
+
     async function loadDashboardData() {
       try {
-        const statsRes = await fetch('/api/stats');
-        const stats = await statsRes.json();
-        
-        document.getElementById('stat-scanned').innerText = stats.totalScanned || 0;
-        document.getElementById('stat-matches').innerText = stats.topMatches || 0;
-        document.getElementById('stat-applied').innerText = stats.totalApplied || 0;
-        document.getElementById('stat-avg-score').innerText = (stats.avgScore || 0).toFixed(1);
-
-        const profileRes = await fetch('/api/profile');
-        currentProfile = await profileRes.json();
-        if (currentProfile) {
-          document.getElementById('prof-name').innerText = currentProfile.name || 'Candidate Name';
-          document.getElementById('prof-headline').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentProfile.location || 'Pune'}, India`;
-          document.getElementById('prof-yoe').innerText = `${currentProfile.totalYoe || 2.5} Years`;
-          document.getElementById('prof-np').innerText = `${currentProfile.noticePeriodDays || 15} Days`;
-          document.getElementById('prof-c-ctc').innerText = `${currentProfile.currentCtcLpa || 3.2} LPA`;
-          document.getElementById('prof-e-ctc').innerText = `${currentProfile.expectedCtcLpa || 6.5} LPA`;
+        const statsRes = await fetch('/api/stats').catch(() => null);
+        if (statsRes && statsRes.ok) {
+          const stats = await statsRes.json();
           
-          const initials = (currentProfile.name || 'MZ').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-          document.getElementById('prof-initials').innerText = initials;
+          document.getElementById('stat-scanned').innerText = stats.totalScanned || 0;
+          document.getElementById('stat-matches').innerText = stats.topMatches || 0;
+          document.getElementById('stat-applied').innerText = stats.totalApplied || 0;
+          document.getElementById('stat-avg-score').innerText = (stats.avgScore || 0).toFixed(1);
 
-          if (currentProfile.resumePath) {
-            document.getElementById('resume-status-text').innerText = 'Resume Uploaded ✅';
+          const profileRes = await fetch('/api/profile').catch(() => null);
+          if (profileRes && profileRes.ok) {
+            currentProfile = await profileRes.json();
+            renderProfileUI();
+          }
+
+          const jobsRes = await fetch('/api/jobs').catch(() => null);
+          if (jobsRes && jobsRes.ok) {
+            allJobs = await jobsRes.json();
+            filterJobs();
+          }
+
+          loadAnswers();
+        } else if (supabaseClient) {
+          // Cloud Supabase Direct Fallback (For Netlify deployed web app)
+          const { data: jobs, error } = await supabaseClient.from('jobs').select('*').order('score', { ascending: false });
+          if (jobs) {
+            allJobs = jobs;
+            const totalScanned = jobs.length;
+            const topMatches = jobs.filter(j => (j.score || 0) >= 2.5).length;
+            const totalApplied = jobs.filter(j => j.status === 'applied').length;
+            const avgScore = jobs.length > 0 ? (jobs.reduce((a, b) => a + (b.score || 0), 0) / jobs.length) : 0;
+
+            document.getElementById('stat-scanned').innerText = totalScanned;
+            document.getElementById('stat-matches').innerText = topMatches;
+            document.getElementById('stat-applied').innerText = totalApplied;
+            document.getElementById('stat-avg-score').innerText = avgScore.toFixed(1);
+
+            filterJobs();
           }
         }
-
-        const jobsRes = await fetch('/api/jobs');
-        allJobs = await jobsRes.json();
-        filterJobs();
-
-        loadAnswers();
       } catch (err) {
-        showToast('Error connecting to JobOps server', 'error');
+        showToast('Connected to JobOps UI', 'info');
+      }
+    }
+
+    function renderProfileUI() {
+      if (currentProfile) {
+        document.getElementById('prof-name').innerText = currentProfile.name || 'Candidate Name';
+        document.getElementById('prof-headline').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentProfile.location || 'Pune'}, India`;
+        document.getElementById('prof-yoe').innerText = `${currentProfile.totalYoe || 2.5} Years`;
+        document.getElementById('prof-np').innerText = `${currentProfile.noticePeriodDays || 15} Days`;
+        document.getElementById('prof-c-ctc').innerText = `${currentProfile.currentCtcLpa || 3.2} LPA`;
+        document.getElementById('prof-e-ctc').innerText = `${currentProfile.expectedCtcLpa || 6.5} LPA`;
+        
+        const initials = (currentProfile.name || 'MZ').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+        document.getElementById('prof-initials').innerText = initials;
+
+        if (currentProfile.resumePath) {
+          document.getElementById('resume-status-text').innerText = 'Resume Uploaded ✅';
+        }
       }
     }
 
@@ -1270,12 +1449,11 @@
     }
 
     async function runAction(endpoint) {
-      showToast('Triggering action in background...', 'info');
+      showToast('Process launched! Streaming live logs below...', 'info');
       try {
         const res = await fetch(endpoint, { method: 'POST' });
         const data = await res.json();
-        showToast(data.message || 'Action executed successfully!', 'success');
-        setTimeout(loadDashboardData, 2000);
+        showToast(data.message || 'Action launched!', 'success');
       } catch (e) {
         showToast('Action trigger failed', 'error');
       }
@@ -1290,9 +1468,10 @@
       setTimeout(() => toast.remove(), 4000);
     }
 
-    // Auto-load on boot
+    // Boot
     loadDashboardData();
-    setInterval(loadDashboardData, 10000); // Live poll every 10s
+    initTerminalStream();
+    setInterval(loadDashboardData, 10000);
   </script>
 </body>
 </html>

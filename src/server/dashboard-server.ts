@@ -1,18 +1,86 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { spawn } from 'child_process';
 import { getDb } from '../db/schema';
 import { loadProfile, saveProfile } from '../config';
-import { evaluateJobs } from '../engine/evaluator';
-import { scanLinkedInJobs } from '../scraper/linkedin-scanner';
+
+const recentLogs: string[] = [
+  `[${new Date().toLocaleTimeString()}] 🚀 JobOps Live Automation Console initialized.`
+];
+const sseSubscribers: express.Response[] = [];
+
+function broadcastLog(line: string) {
+  const formattedLine = line.startsWith('[') ? line : `[${new Date().toLocaleTimeString()}] ${line}`;
+  recentLogs.push(formattedLine);
+  if (recentLogs.length > 500) recentLogs.shift();
+
+  // Send SSE payload to all open web dashboard browser windows
+  sseSubscribers.forEach(res => {
+    try {
+      res.write(`data: ${JSON.stringify({ log: formattedLine })}\n\n`);
+    } catch (e) {}
+  });
+}
+
+function runCliCommand(args: string[]): Promise<number> {
+  return new Promise((resolve) => {
+    broadcastLog(`\n💻 Executing: npx ts-node src/index.ts ${args.join(' ')}`);
+    
+    const child = spawn('npx', ['ts-node', 'src/index.ts', ...args], {
+      cwd: process.cwd(),
+      shell: true,
+      env: { ...process.env, FORCE_COLOR: '1' }
+    });
+
+    child.stdout.on('data', data => {
+      const lines = data.toString().split('\n');
+      lines.forEach((l: string) => {
+        const clean = l.replace(/\r/g, '').trim();
+        if (clean) broadcastLog(clean);
+      });
+    });
+
+    child.stderr.on('data', data => {
+      const lines = data.toString().split('\n');
+      lines.forEach((l: string) => {
+        const clean = l.replace(/\r/g, '').trim();
+        if (clean && !clean.includes('ExperimentalWarning')) broadcastLog(`⚠️ ${clean}`);
+      });
+    });
+
+    child.on('close', code => {
+      broadcastLog(`✨ [Process Completed] Exit Code: ${code}`);
+      resolve(code || 0);
+    });
+  });
+}
 
 export function startDashboardServer(port: number = 3000) {
   const app = express();
 
-  // Allow up to 50MB for PDF resume base64 uploads
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.use(express.static(path.join(process.cwd(), 'public')));
+
+  // SSE Live Log Streaming Endpoint
+  app.get('/api/logs/stream', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    sseSubscribers.push(res);
+
+    req.on('close', () => {
+      const index = sseSubscribers.indexOf(res);
+      if (index !== -1) sseSubscribers.splice(index, 1);
+    });
+  });
+
+  // GET /api/logs - Initial Log History
+  app.get('/api/logs', (req, res) => {
+    res.json({ logs: recentLogs });
+  });
 
   // GET /api/stats
   app.get('/api/stats', (req, res) => {
@@ -68,12 +136,11 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
-  // POST /api/profile - Save candidate profile updates
+  // POST /api/profile
   app.post('/api/profile', (req, res) => {
     try {
       const updatedProfile = saveProfile(req.body);
       
-      // Update answers.json defaults for basic candidate info
       const answersPath = path.join(process.cwd(), 'answers.json');
       let cache: Record<string, string> = {};
       if (fs.existsSync(answersPath)) {
@@ -99,35 +166,34 @@ export function startDashboardServer(port: number = 3000) {
 
       fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
 
-      res.json({ message: '✅ Candidate Profile & AI Knowledge Base updated successfully!', profile: updatedProfile });
+      broadcastLog(`👤 [Profile Updated] Candidate: ${updatedProfile.name} (${updatedProfile.location})`);
+      res.json({ message: '✅ Candidate Profile updated!', profile: updatedProfile });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // POST /api/resume - Handle PDF Resume upload
+  // POST /api/resume
   app.post('/api/resume', (req, res) => {
     try {
-      const { fileName, fileData } = req.body; // base64 string
+      const { fileName, fileData } = req.body;
       if (!fileData) {
         return res.status(400).json({ error: 'No resume file data provided.' });
       }
 
-      // Convert base64 to binary buffer
       const base64Data = fileData.replace(/^data:application\/pdf;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
 
       const resumePdfPath = path.join(process.cwd(), 'resume.pdf');
       fs.writeFileSync(resumePdfPath, buffer);
 
-      // Save resumePath in profile.yml
-      const profile = saveProfile({
+      saveProfile({
         resumePath: resumePdfPath,
         resumeUploadPath: resumePdfPath
       });
 
-      console.log(`📄 [Resume Uploaded] Saved new resume PDF (${buffer.length} bytes) to ${resumePdfPath}`);
-      res.json({ message: '✅ PDF Resume uploaded & set for AI Form Solver!', resumePath: resumePdfPath });
+      broadcastLog(`📄 [Resume Uploaded] Saved PDF resume file (${buffer.length} bytes) to resume.pdf`);
+      res.json({ message: '✅ PDF Resume uploaded successfully!', resumePath: resumePdfPath });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -147,12 +213,12 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
-  // POST /api/answers - Add or update custom Q&A answer
+  // POST /api/answers
   app.post('/api/answers', (req, res) => {
     try {
       const { question, answer } = req.body;
       if (!question || answer === undefined) {
-        return res.status(400).json({ error: 'Question and Answer fields are required.' });
+        return res.status(400).json({ error: 'Question and Answer fields required.' });
       }
 
       const answersPath = path.join(process.cwd(), 'answers.json');
@@ -165,7 +231,8 @@ export function startDashboardServer(port: number = 3000) {
       cache[normalizedKey] = answer.toString();
 
       fs.writeFileSync(answersPath, JSON.stringify(cache, null, 2), 'utf8');
-      res.json({ message: `✅ Saved answer for "${question}" ➔ "${answer}"`, cache });
+      broadcastLog(`💾 [Knowledge Base Saved] "${question}" ➔ "${answer}"`);
+      res.json({ message: `✅ Saved answer for "${question}"`, cache });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -187,41 +254,49 @@ export function startDashboardServer(port: number = 3000) {
         return res.json({ message: `✅ Deleted answer key: "${key}"` });
       }
 
-      res.status(404).json({ error: 'Key not found in AI cache.' });
+      res.status(404).json({ error: 'Key not found.' });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // POST /api/scan
+  // Action 1: POST /api/scan
   app.post('/api/scan', async (req, res) => {
-    try {
-      const query = req.body.query || 'Angular Developer';
-      const location = req.body.location || 'India';
-      const maxPages = req.body.pages ? parseInt(req.body.pages, 10) : 3;
+    const query = req.body.query || 'Angular Developer';
+    const location = req.body.location || 'India';
+    const pages = req.body.pages ? req.body.pages.toString() : '3';
 
-      scanLinkedInJobs({
-        query,
-        location,
-        maxPages,
-        headless: true,
-        timePosted: 'r86400'
-      }).catch(err => console.error('Background Scan Error:', err));
-
-      res.json({ message: `🚀 LinkedIn 24-hour scan launched for "${query}" in "${location}"!` });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
+    res.json({ message: `🔍 Step 1: LinkedIn 24-hour Job Scan launched!` });
+    runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', pages, '-t', 'r86400']);
   });
 
-  // POST /api/evaluate
+  // Action 2: POST /api/evaluate
   app.post('/api/evaluate', (req, res) => {
-    try {
-      const evaluated = evaluateJobs();
-      res.json({ message: `⚡ AI Evaluated ${evaluated.length} jobs!`, count: evaluated.length });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
+    res.json({ message: `⚡ Step 2: AI Job Evaluator launched!` });
+    runCliCommand(['evaluate']);
+  });
+
+  // Action 3: POST /api/apply-all
+  app.post('/api/apply-all', (req, res) => {
+    const minScore = req.body.minScore || '2.5';
+    res.json({ message: `🤖 Step 3: AI Easy Apply Auto-Apply launched!` });
+    runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
+  });
+
+  // Action 4: POST /api/run-all (Full Pipeline: Scan ➔ Evaluate ➔ Auto-Apply)
+  app.post('/api/run-all', async (req, res) => {
+    const query = req.body.query || 'Angular Developer';
+    const location = req.body.location || 'India';
+
+    res.json({ message: `🔥 Full Automated Job Pipeline launched! (Scan ➔ Evaluate ➔ Auto-Apply)` });
+
+    (async () => {
+      broadcastLog(`\n🚀 [Full Automation Pipeline] Starting 3-Step Workflow...`);
+      await runCliCommand(['linkedin-scan', '--query', query, '--location', location, '--pages', '3', '-t', 'r86400']);
+      await runCliCommand(['evaluate']);
+      await runCliCommand(['linkedin-apply', '--min-score', '2.5', '--auto']);
+      broadcastLog(`🎉 [Full Automation Pipeline Completed] All 3 steps finished successfully!`);
+    })();
   });
 
   // Serve SPA index.html for any unmatched route
