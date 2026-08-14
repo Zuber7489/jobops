@@ -5,7 +5,7 @@ import path from 'path';
 
 export function isChromeCdpRunning(port: number = 9222): Promise<boolean> {
   return new Promise((resolve) => {
-    const req = http.get(`http://localhost:${port}/json/version`, (res) => {
+    const req = http.get(`http://127.0.0.1:${port}/json/version`, (res) => {
       resolve(res.statusCode === 200);
     });
     req.on('error', () => resolve(false));
@@ -44,31 +44,35 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
     return false;
   }
 
-  console.log(`🚀 [Chrome Launcher] Automatically launching Chrome with --remote-debugging-port=${port}...`);
+  console.log(`🚀 [Chrome Launcher] Launching Chrome with --remote-debugging-port=${port}...`);
   
   const userDataDir = path.join(process.cwd(), '.chrome-user-data');
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }
 
-  const child = spawn(chromePath, [
-    `--remote-debugging-port=${port}`,
-    `--user-data-dir=${userDataDir}`,
-    'https://www.linkedin.com'
-  ], {
-    detached: true,
-    stdio: 'ignore'
-  });
-  child.unref();
+  try {
+    const child = spawn(chromePath, [
+      `--remote-debugging-port=${port}`,
+      `--user-data-dir=${userDataDir}`,
+      'https://www.linkedin.com'
+    ], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    child.unref();
 
-  // Wait up to 5 seconds for port 9222 to become active
-  for (let i = 0; i < 10; i++) {
-    await new Promise(r => setTimeout(r, 500));
-    if (await isChromeCdpRunning(port)) {
-      console.log(`✅ [Chrome Launcher] Chrome launched successfully on port ${port}`);
-      return true;
+    // Wait up to 3 seconds for port 9222 to respond
+    for (let i = 0; i < 6; i++) {
+      await new Promise(r => setTimeout(r, 500));
+      if (await isChromeCdpRunning(port)) {
+        console.log(`✅ [Chrome Launcher] Chrome launched successfully on port ${port}`);
+        return true;
+      }
     }
+    return true; // Return true as child process was initiated
+  } catch (e: any) {
+    console.error(`❌ [Chrome Launcher Error]: ${e.message}`);
+    return false;
   }
-
-  return false;
 }
