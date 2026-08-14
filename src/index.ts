@@ -202,9 +202,19 @@ program
         "do you require visa sponsorship": "No"
       };
       fs.writeFileSync(answersPath, JSON.stringify(safeDefaults, null, 2), 'utf8');
-      console.log(`✅ [Cache Reset] answers.json has been restored to safe defaults.`);
-      console.log(`📁 Path: ${answersPath}`);
     }
+  });
+
+// Command 7: dashboard
+program
+  .command('dashboard')
+  .alias('ui')
+  .description('Launch JobOps Web Application Dashboard (Visual UI & Control Center)')
+  .option('-p, --port <number>', 'Port number to run web dashboard', '3000')
+  .action((options) => {
+    const { startDashboardServer } = require('./server/dashboard-server');
+    const port = parseInt(options.port, 10);
+    startDashboardServer(port);
   });
 
 program.parse(process.argv);

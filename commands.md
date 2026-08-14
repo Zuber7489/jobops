@@ -1,5 +1,11 @@
 # JobOps Automation Commands (Pan-India Remote & Hybrid Focus)
 
+## Step 0: Launch Visual Web Application Dashboard
+```bash
+npm run dashboard
+# Open http://localhost:3000 in your browser
+```
+
 ## Step 1: Open Chrome Session (Run Once)
 ```bash
 npx ts-node src/index.ts launch-chrome

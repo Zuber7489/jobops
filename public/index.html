@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobOps AI — Job Automation & Match Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --bg-input: rgba(15, 23, 42, 0.9);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 245, 160, 0.3);
+      
+      --accent-emerald: #00F5A0;
+      --accent-cyan: #00D2FF;
+      --accent-violet: #7B2CBF;
+      --accent-pink: #FF2E93;
+      --accent-gold: #FFB800;
+      
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 24px;
+      
+      --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      --glow-emerald: 0 0 25px rgba(0, 245, 160, 0.25);
+      --glow-cyan: 0 0 25px rgba(0, 210, 255, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(123, 44, 191, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(0, 210, 255, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(0, 245, 160, 0.1) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(7, 9, 14, 0.8); }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 245, 160, 0.4); }
+
+    .app-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 32px 60px 32px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 28px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--glass-shadow);
+      margin-bottom: 32px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #07090e;
+      box-shadow: var(--glow-emerald);
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #FFF 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(0, 245, 160, 0.1);
+      border: 1px solid rgba(0, 245, 160, 0.3);
+      color: var(--accent-emerald);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      color: #07090e;
+      box-shadow: var(--glow-emerald);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 245, 160, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-purple {
+      background: linear-gradient(135deg, var(--accent-violet), #9D4EDD);
+      color: #FFF;
+      box-shadow: 0 0 20px rgba(123, 44, 191, 0.3);
+    }
+    .btn-purple:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(123, 44, 191, 0.5);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--accent-cyan));
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .stat-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--card-accent, var(--accent-cyan));
+    }
+
+    .stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Main Dashboard Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Content Card Container */
+    .panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .panel-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Job Table / Cards */
+    .job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .job-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.25s ease;
+    }
+
+    .job-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(4px);
+    }
+
+    .job-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .job-score-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      line-height: 1;
+      border: 1px solid transparent;
+    }
+
+    .score-high {
+      background: rgba(0, 245, 160, 0.15);
+      color: var(--accent-emerald);
+      border-color: rgba(0, 245, 160, 0.4);
+      box-shadow: 0 0 15px rgba(0, 245, 160, 0.2);
+    }
+
+    .score-med {
+      background: rgba(0, 210, 255, 0.15);
+      color: var(--accent-cyan);
+      border-color: rgba(0, 210, 255, 0.4);
+    }
+
+    .score-low {
+      background: rgba(255, 184, 0, 0.15);
+      color: var(--accent-gold);
+      border-color: rgba(255, 184, 0, 0.4);
+    }
+
+    .job-details h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .job-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .job-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .job-reason {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--accent-cyan);
+      font-family: 'Fira Code', monospace;
+      background: rgba(0, 210, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .job-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 46, 147, 0.2);
+      color: var(--accent-pink);
+      border-color: rgba(255, 46, 147, 0.4);
+    }
+
+    .status-tag {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-scanned { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
+    .tag-evaluated { background: rgba(0, 210, 255, 0.15); color: var(--accent-cyan); }
+    .tag-applied { background: rgba(0, 245, 160, 0.15); color: var(--accent-emerald); }
+    .tag-skipped { background: rgba(255, 46, 147, 0.15); color: var(--accent-pink); }
+
+    /* Right Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .profile-card {
+      background: linear-gradient(135deg, rgba(123, 44, 191, 0.2), rgba(15, 23, 42, 0.8));
+      border: 1px solid rgba(123, 44, 191, 0.3);
+    }
+
+    .profile-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #FFF;
+      margin-bottom: 12px;
+    }
+
+    .profile-info h3 { font-size: 18px; font-weight: 700; }
+    .profile-info p { font-size: 12px; color: var(--text-muted); }
+
+    .profile-metrics {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric-box {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .metric-box label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; display: block; }
+    .metric-box val { font-size: 13px; font-weight: 700; color: var(--text-main); }
+
+    /* Q&A Knowledge Base Panel */
+    .qa-item {
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 8px;
+    }
+
+    .qa-question { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .qa-answer { font-size: 13px; color: var(--accent-emerald); font-family: 'Fira Code', monospace; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-dim);
+    }
+
+    .empty-state i {
+      font-size: 40px;
+      margin-bottom: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Notification Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--accent-cyan);
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-size: 13px;
+      box-shadow: var(--glass-shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="brand-text">
+          <h1>JobOps Control Center</h1>
+          <p>
+            <span>LinkedIn & AI Automation Engine</span>
+            <span class="status-badge"><span class="status-dot"></span> System Ready</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="runAction('/api/scan')">
+          <i class="fa-solid fa-magnifying-glass"></i> Scan Jobs (24h)
+        </button>
+        <button class="btn btn-purple" onclick="runAction('/api/evaluate')">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Evaluate
+        </button>
+        <button class="btn btn-primary" onclick="runAction('/api/apply-all')">
+          <i class="fa-solid fa-paper-plane"></i> Auto-Apply Queue
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Key Metrics Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--card-accent: var(--accent-cyan)">
+        <div class="stat-header">
+          <span class="stat-title">Total Scanned Jobs</span>
+          <div class="stat-icon"><i class="fa-solid fa-briefcase"></i></div>
+        </div>
+        <div class="stat-value" id="stat-scanned">0</div>
+        <div class="stat-subtitle">Filtered for Remote & Hybrid</div>
+      </div>
+
+      <div class="stat-card" style="--card-accent: var(--accent-emerald)">
+        <div class="stat-header">
+          <span class="stat-title">Top AI Matches</span>
+          <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+        </div>
+        <div class="stat-value" id="stat-matches">0</div>
+        <div class="stat-subtitle">Match Score ≥ 2.5 / 5.0</div>
+      </div>
+
+      <div class="stat-card" style="--card-accent: var(--accent-violet)">
+        <div class="stat-header">
+          <span class="stat-title">Applications Submitted</span>
+          <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        </div>
+        <div class="stat-value" id="stat-applied">0</div>
+        <div class="stat-subtitle">Submitted via Easy Apply</div>
+      </div>
+
+      <div class="stat-card" style="--card-accent: var(--accent-pink)">
+        <div class="stat-header">
+          <span class="stat-title">Avg Match Score</span>
+          <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+        </div>
+        <div class="stat-value" id="stat-avg-score">0.0</div>
+        <div class="stat-subtitle">Based on Candidate Skills</div>
+      </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="dashboard-layout">
+      
+      <!-- Left Column: Job Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-list-check" style="color: var(--accent-cyan)"></i>
+            Job Queue & Applications
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" onclick="setFilter('all', this)">All Jobs</div>
+            <div class="tab" onclick="setFilter('top', this)">⭐ Top Matches</div>
+            <div class="tab" onclick="setFilter('scanned', this)">Scanned</div>
+            <div class="tab" onclick="setFilter('applied', this)">Applied</div>
+          </div>
+        </div>
+
+        <div class="controls-bar">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-input" class="input-field" placeholder="Search by title, company or location..." oninput="filterJobs()">
+          </div>
+          <button class="btn btn-secondary" onclick="loadDashboardData()">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+
+        <div id="job-list-container" class="job-list">
+          <div class="empty-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Loading jobs from JobOps Database...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Candidate Profile & Knowledge Base -->
+      <div class="sidebar">
+        
+        <!-- Candidate Profile -->
+        <div class="panel profile-card">
+          <div class="profile-avatar" id="prof-initials">MZ</div>
+          <div class="profile-info">
+            <h3 id="prof-name">Mohammad Zuber</h3>
+            <p id="prof-headline"><i class="fa-solid fa-location-dot"></i> Pune, India</p>
+          </div>
+
+          <div class="profile-metrics">
+            <div class="metric-box">
+              <label>Experience</label>
+              <val id="prof-yoe">2.5 Years</val>
+            </div>
+            <div class="metric-box">
+              <label>Notice Period</label>
+              <val id="prof-np">15 Days</val>
+            </div>
+            <div class="metric-box">
+              <label>Current CTC</label>
+              <val id="prof-c-ctc">3.2 LPA</val>
+            </div>
+            <div class="metric-box">
+              <label>Expected CTC</label>
+              <val id="prof-e-ctc">6.5 LPA</val>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Knowledge Base Quick Preview -->
+        <div class="panel">
+          <div class="panel-header" style="margin-bottom: 16px;">
+            <div class="panel-title" style="font-size: 16px;">
+              <i class="fa-solid fa-brain" style="color: var(--accent-emerald)"></i>
+              AI Answer Knowledge Base
+            </div>
+          </div>
+
+          <div id="qa-container" style="max-height: 380px; overflow-y: auto;">
+            <div class="empty-state" style="padding: 20px;">
+              <p>Loading AI cache...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    let allJobs = [];
+    let currentFilter = 'all';
+
+    async function loadDashboardData() {
+      try {
+        const statsRes = await fetch('/api/stats');
+        const stats = await statsRes.json();
+        
+        document.getElementById('stat-scanned').innerText = stats.totalScanned || 0;
+        document.getElementById('stat-matches').innerText = stats.topMatches || 0;
+        document.getElementById('stat-applied').innerText = stats.totalApplied || 0;
+        document.getElementById('stat-avg-score').innerText = (stats.avgScore || 0).toFixed(1);
+
+        const profileRes = await fetch('/api/profile');
+        const prof = await profileRes.json();
+        if (prof) {
+          document.getElementById('prof-name').innerText = prof.name || 'Mohammad Zuber';
+          document.getElementById('prof-headline').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${prof.location || 'Pune'}, India`;
+          document.getElementById('prof-yoe').innerText = `${prof.totalYoe || 2.5} Years`;
+          document.getElementById('prof-np').innerText = `${prof.noticePeriodDays || 15} Days`;
+          document.getElementById('prof-c-ctc').innerText = `${prof.currentCtcLpa || 3.2} LPA`;
+          document.getElementById('prof-e-ctc').innerText = `${prof.expectedCtcLpa || 6.5} LPA`;
+        }
+
+        const jobsRes = await fetch('/api/jobs');
+        allJobs = await jobsRes.json();
+        filterJobs();
+
+        loadAnswers();
+      } catch (err) {
+        showToast('Error connecting to JobOps server', 'error');
+      }
+    }
+
+    async function loadAnswers() {
+      try {
+        const res = await fetch('/api/answers');
+        const answers = await res.json();
+        const container = document.getElementById('qa-container');
+        
+        const keys = Object.keys(answers).slice(0, 8);
+        if (keys.length === 0) {
+          container.innerHTML = `<p style="font-size:12px; color: var(--text-dim)">No cached AI answers yet.</p>`;
+          return;
+        }
+
+        container.innerHTML = keys.map(k => `
+          <div class="qa-item">
+            <div class="qa-question">${k}</div>
+            <div class="qa-answer">➔ ${answers[k]}</div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    function setFilter(filter, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      currentFilter = filter;
+      filterJobs();
+    }
+
+    function filterJobs() {
+      const search = document.getElementById('search-input').value.toLowerCase().trim();
+      
+      let filtered = allJobs.filter(j => {
+        const text = `${j.title} ${j.company} ${j.location}`.toLowerCase();
+        const matchesSearch = !search || text.includes(search);
+        
+        if (!matchesSearch) return false;
+
+        if (currentFilter === 'top') return (j.score || 0) >= 2.5;
+        if (currentFilter === 'scanned') return j.status === 'scanned';
+        if (currentFilter === 'applied') return j.status === 'applied';
+        return true;
+      });
+
+      renderJobList(filtered);
+    }
+
+    function renderJobList(jobs) {
+      const container = document.getElementById('job-list-container');
+      
+      if (jobs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>No matching jobs found in JobOps database.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = jobs.map(j => {
+        const score = parseFloat(j.score || 0);
+        let scoreClass = 'score-low';
+        if (score >= 3.5) scoreClass = 'score-high';
+        else if (score >= 2.5) scoreClass = 'score-med';
+
+        return `
+          <div class="job-card">
+            <div class="job-main">
+              <div class="job-score-badge ${scoreClass}">
+                ${score.toFixed(1)}
+              </div>
+              <div class="job-details">
+                <h3>${j.title}</h3>
+                <div class="job-meta">
+                  <span><i class="fa-solid fa-building"></i> ${j.company}</span>
+                  <span><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
+                  <span class="status-tag tag-${j.status}">${j.status}</span>
+                </div>
+                ${j.evaluation_reason ? `<div class="job-reason">${j.evaluation_reason}</div>` : ''}
+              </div>
+            </div>
+
+            <div class="job-actions">
+              <a href="${j.url}" target="_blank" class="btn-icon" title="View Job on LinkedIn">
+                <i class="fa-solid fa-up-right-from-square"></i>
+              </a>
+              <button class="btn-icon btn-danger" onclick="deleteJob(${j.id})" title="Delete Job">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function deleteJob(id) {
+      try {
+        const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Job deleted from database', 'success');
+          loadDashboardData();
+        }
+      } catch (e) {
+        showToast('Failed to delete job', 'error');
+      }
+    }
+
+    async function runAction(endpoint) {
+      showToast('Triggering action in background...', 'info');
+      try {
+        const res = await fetch(endpoint, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.message || 'Action executed successfully!', 'success');
+        setTimeout(loadDashboardData, 2000);
+      } catch (e) {
+        showToast('Action trigger failed', 'error');
+      }
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Auto-load on boot
+    loadDashboardData();
+    setInterval(loadDashboardData, 10000); // Live poll every 10s
+  </script>
+</body>
+</html>

@@ -5,16 +5,19 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "jobops": "ts-node src/index.ts"
+    "jobops": "ts-node src/index.ts",
+    "dashboard": "ts-node src/index.ts dashboard"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
+    "@types/express": "^5.0.6",
     "better-sqlite3": "^11.8.1",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",
+    "express": "^5.2.1",
     "inquirer": "^9.3.7",
     "playwright": "^1.50.1",
     "yaml": "^2.7.0"
