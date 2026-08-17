@@ -126,5 +126,10 @@
   "start year": "2020",
   "end month": "June",
   "end year": "2024",
-  "do you have professional experience with vue.js, react, or angular?": "2"
+  "do you have professional experience with vue.js, react, or angular?": "2",
+  "how many years of work experience do you have with full stack developer?": "2",
+  "how many years of work experience do you have with c++?": "0",
+  "how many years of experience do you have in frontend ?": "2",
+  "what is your np ?": "1 day",
+  "are you willing to relocate in bangalore hsr layout ?": "Yes"
 }

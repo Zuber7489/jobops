@@ -74,6 +74,24 @@ async function findVisibleElement(page: Page, selectors: string[], timeoutMs: nu
   return null;
 }
 
+function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: string): string {
+  let answer = (rawAnswer || '').trim();
+
+  // Check if this field requires pure numeric input (numbers only)
+  const isNumericField = inputType === 'number' ||
+    /notice|period|day|year|experience|ctc|salary|compensation|package|phone|mobile/i.test(labelText);
+
+  if (isNumericField) {
+    // Strip out all non-digit characters e.g. "1 day" -> "1", "15 days" -> "15", "2.5" -> "2"
+    const digitsOnly = answer.replace(/[^\d]/g, '');
+    if (digitsOnly) {
+      answer = digitsOnly;
+    }
+  }
+
+  return answer;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed' | 'limit_reached';
@@ -194,7 +212,28 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       : job.url;
 
     console.log(`🌐 Navigating to LinkedIn job page: ${targetUrl}`);
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    let navOk = false;
+    try {
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
+      navOk = true;
+    } catch (navErr: any) {
+      console.log(`⚠️ Direct job view navigation failed (${navErr.message || 'Timeout/Network error'}).`);
+      if (rawJobId) {
+        const searchViewUrl = `https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`;
+        console.log(`🔄 Retrying via LinkedIn Search View URL: ${searchViewUrl}`);
+        try {
+          await page.goto(searchViewUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+          navOk = true;
+        } catch (retryErr: any) {
+          console.log(`⏩ Search View fallback navigation also failed. Marking job as skipped.`);
+          updateJobStatus(job.external_job_id, 'skipped');
+          return 'skipped';
+        }
+      } else {
+        updateJobStatus(job.external_job_id, 'skipped');
+        return 'skipped';
+      }
+    }
 
     // 🕐 Human-like random read pause after page load
     await simulateMouseMovement(page);
@@ -319,11 +358,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             let aiAnswer = await answerQuestionWithGemini(labelText, job.title);
 
             const inputType = (await input.getAttribute('type').catch(() => '')) || '';
-            if (inputType === 'number' || labelText.toLowerCase().includes('year') || labelText.toLowerCase().includes('experience')) {
-              if (aiAnswer.includes('.')) {
-                aiAnswer = Math.round(parseFloat(aiAnswer) || 2).toString();
-              }
-            }
+            aiAnswer = sanitizeInputAnswer(labelText, aiAnswer, inputType);
 
             console.log(`💡 Answer: "${aiAnswer}"`);
 
@@ -543,22 +578,30 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error').first();
         if (await errorFeedback.isVisible().catch(() => false)) {
           console.log(`⚠️ Form field validation warning detected. Resolving remaining inputs with profile data...`);
-          const emptyInputs = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
-          const empCount = await emptyInputs.count();
+          const inputsToFix = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
+          const empCount = await inputsToFix.count();
           for (let e = 0; e < empCount; e++) {
-            const input = emptyInputs.nth(e);
+            const input = inputsToFix.nth(e);
             const val = await input.inputValue().catch(() => '');
-            if (!val || val.trim() === '') {
-              let labelText = (await input.getAttribute('aria-label').catch(() => '')) ||
-                              (await input.getAttribute('name').catch(() => '')) || 'Years of experience';
-              let cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
 
-              const inputType = (await input.getAttribute('type').catch(() => '')) || '';
-              if (inputType === 'number' || labelText.toLowerCase().includes('year') || labelText.toLowerCase().includes('experience')) {
-                if (cleanAnswer.includes('.')) {
-                  cleanAnswer = Math.round(parseFloat(cleanAnswer) || 2).toString();
-                }
-              }
+            let labelText = '';
+            const parentBlock = input.locator('xpath=ancestor::div[contains(@class, "fb-") or contains(@class, "form") or contains(@class, "group")]').first();
+            if (await parentBlock.count() > 0) {
+              labelText = (await parentBlock.locator('label, legend, span[aria-hidden="true"]').first().textContent().catch(() => '')) || '';
+            }
+            if (!labelText) {
+              labelText = (await input.getAttribute('aria-label').catch(() => '')) ||
+                          (await input.getAttribute('name').catch(() => '')) || 'Years of experience';
+            }
+            labelText = labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+            const inputType = (await input.getAttribute('type').catch(() => '')) || '';
+
+            const isNumericField = inputType === 'number' || /notice|period|day|year|experience|ctc|salary|compensation|package/i.test(labelText);
+            const hasInvalidTextInNumericField = isNumericField && /\D/.test(val.trim());
+
+            if (!val || val.trim() === '' || hasInvalidTextInNumericField) {
+              let cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
+              cleanAnswer = sanitizeInputAnswer(labelText, cleanAnswer, inputType);
 
               const isLocationInput = labelText.toLowerCase().includes('location') ||
                                       labelText.toLowerCase().includes('city') ||
@@ -566,8 +609,8 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
               await input.focus().catch(() => null);
               await input.fill('').catch(() => null);
-              await input.pressSequentially(cleanAnswer, { delay: 50 }).catch(() => null);
-              await page.waitForTimeout(500);
+              await input.pressSequentially(cleanAnswer, { delay: 40 }).catch(() => null);
+              await page.waitForTimeout(400);
 
               if (isLocationInput) {
                 const typeaheadHit = page.locator('li[role="option"], div[role="option"], div.basic-typeahead__results li, .search-typeahead-v2__hit').first();
@@ -595,6 +638,19 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
   } catch (err: any) {
     console.error(`❌ [LinkedIn Apply Error]: ${err.message}`);
+    const msg = (err.message || '').toLowerCase();
+    const isConnError = msg.includes('net::err_connection') ||
+                        msg.includes('target closed') ||
+                        msg.includes('context closed') ||
+                        msg.includes('browser has been closed') ||
+                        msg.includes('cdp port') ||
+                        msg.includes('econnrefused');
+
+    if (isConnError) {
+      console.log(`🛑 Chrome CDP/Browser connection issue detected. Returning connection_error.`);
+      return 'connection_error';
+    }
+
     updateJobStatus(job.external_job_id, 'failed');
     return 'failed';
   } finally {

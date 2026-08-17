@@ -123,9 +123,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:26:49",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:38:36"
   },
   {
     "id": 1816,
@@ -139,9 +139,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:26:39",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:36:42"
   },
   {
     "id": 1815,
@@ -299,9 +299,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:17:51",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:35:25"
   },
   {
     "id": 1802,
@@ -363,9 +363,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:17:46",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:35:00"
   },
   {
     "id": 1798,
@@ -395,9 +395,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:17:44",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:34:23"
   },
   {
     "id": 1796,
@@ -427,9 +427,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:17:34",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:33:31"
   },
   {
     "id": 1794,
@@ -475,9 +475,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 12:17:30",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:32:30"
   },
   {
     "id": 1791,
