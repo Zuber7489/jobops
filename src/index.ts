@@ -189,7 +189,7 @@ program
         "location (city)": "Indore, Madhya Pradesh",
         "city": "Indore",
         "location": "Indore, Madhya Pradesh",
-        "notice period": "15",
+        "notice period": "1",
         "current ctc": "320000",
         "expected ctc": "650000",
         "current annual ctc": "320000",
