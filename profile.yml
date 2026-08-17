@@ -29,3 +29,8 @@ skills:
   - Git
 resumePath: ./cv.md
 resumeUploadPath: ./resume.pdf
+blacklistedCompanies:
+  - Hire Feed
+  - Crossing Hurdles
+  - Quik Hire Staffing
+

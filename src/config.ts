@@ -19,6 +19,7 @@ export interface UserProfile {
   resumePath: string;
   resumeUploadPath?: string; // Optional: Path to PDF resume for auto-upload on LinkedIn Easy Apply
   currentCompany?: string;
+  blacklistedCompanies?: string[];
 }
 
 export const CONFIG = {

@@ -152,6 +152,13 @@ async function fillCoverLetterFields(page: Page, modal: any, job: JobRecord) {
 
 export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
   const profile = loadProfile();
+  const blacklisted = profile.blacklistedCompanies || [];
+  if (blacklisted.some(b => job.company.toLowerCase().includes(b.toLowerCase()))) {
+    console.log(`🚫 [Blacklisted Company Skipped] Job "${job.title}" at "${job.company}" is blacklisted.`);
+    updateJobStatus(job.external_job_id, 'skipped');
+    return 'skipped';
+  }
+
   console.log(`\n🚀 [LinkedIn Apply] Target Job: "${job.title}" at ${job.company}`);
   console.log(`🔗 Job URL: ${job.url}`);
 

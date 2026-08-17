@@ -16,7 +16,24 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
 
   const evaluatedJobs: JobRecord[] = [];
 
+  const blacklisted = profile.blacklistedCompanies || [];
+
   for (const job of jobsToEvaluate) {
+    const isBlacklisted = blacklisted.some(b => job.company.toLowerCase().includes(b.toLowerCase()));
+    if (isBlacklisted) {
+      db.prepare(`
+        UPDATE jobs 
+        SET score = 0.0, evaluation_reason = 'Blacklisted fake company', status = 'skipped' 
+        WHERE external_job_id = ?
+      `).run(job.external_job_id);
+
+      job.score = 0.0;
+      job.evaluation_reason = 'Blacklisted fake company';
+      job.status = 'skipped';
+      console.log(`🚫 [Blacklisted Company Skipped] Job #${job.id}: ${job.title} @ ${job.company}`);
+      continue;
+    }
+
     const textToMatch = `${job.title} ${job.company} ${job.jd_text}`.toLowerCase();
 
     let score = 2.0; // Baseline candidate score

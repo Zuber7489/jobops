@@ -1,7 +1,7 @@
 import { chromium, BrowserContext, Page } from 'playwright';
 import path from 'path';
 import { saveJobRecord, JobRecord } from '../db/schema';
-import { CONFIG } from '../config';
+import { CONFIG, loadProfile } from '../config';
 
 export interface LinkedInScanOptions {
   query: string;
@@ -123,6 +123,10 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
           const rawId = jobIdMatch ? jobIdMatch[1] : Buffer.from(url || `${title}_${company}`).toString('hex').substring(0, 16);
           const externalJobId = `linkedin_${rawId}`;
 
+          const profile = loadProfile();
+          const blacklisted = profile.blacklistedCompanies || [];
+          const isBlacklisted = blacklisted.some(b => company.toLowerCase().includes(b.toLowerCase()));
+
           const jobRecord: Omit<JobRecord, 'id' | 'scanned_at'> = {
             platform: 'linkedin',
             external_job_id: externalJobId,
@@ -133,12 +137,17 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
             jd_text: `LinkedIn Remote/Hybrid Easy Apply Job: ${title} at ${company}`,
             apply_type: 'easy-apply',
             score: 0.0,
-            status: 'scanned'
+            evaluation_reason: isBlacklisted ? 'Blacklisted fake company' : '',
+            status: isBlacklisted ? 'skipped' : 'scanned'
           };
 
           saveJobRecord(jobRecord);
-          scrapedJobs.push(jobRecord as JobRecord);
-          savedCount++;
+          if (!isBlacklisted) {
+            scrapedJobs.push(jobRecord as JobRecord);
+            savedCount++;
+          } else {
+            console.log(`🚫 [Blacklisted Company Skipped]: "${title}" at ${company}`);
+          }
         } catch {
           // Soft catch card parsing errors
         }
