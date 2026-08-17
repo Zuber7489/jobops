@@ -11,9 +11,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": null
+    "applied_at": "2026-08-17 14:16:36"
   },
   {
     "id": 2052,
