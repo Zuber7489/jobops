@@ -3,8 +3,10 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { scanLinkedInJobs } from './scraper/linkedin-scanner';
+import { scanIndeedJobs } from './scraper/indeed-scanner';
 import { evaluateJobs } from './engine/evaluator';
 import { applyLinkedInJob } from './engine/linkedin-apply';
+import { applyIndeedJob } from './engine/indeed-apply';
 import { getUnappliedJobs, getDb } from './db/schema';
 import { CONFIG } from './config';
 
@@ -54,6 +56,23 @@ program
       headless: !options.headed,
       workTypes: options.workTypes,
       timePosted: options.time
+    });
+  });
+
+// Command 2b: indeed-scan
+program
+  .command('indeed-scan')
+  .description('Scan jobs from Indeed India (Filtered for Easily Apply + Remote/Hybrid Focus)')
+  .option('-q, --query <text>', 'Job title / skills query', 'Angular Developer')
+  .option('-l, --location <city>', 'Job location', 'India')
+  .option('-p, --pages <number>', 'Number of pages to scan', '3')
+  .option('--headed', 'Run browser in headed mode', false)
+  .action(async (options) => {
+    await scanIndeedJobs({
+      query: options.query,
+      location: options.location,
+      maxPages: parseInt(options.pages, 10),
+      headless: !options.headed
     });
   });
 
@@ -132,6 +151,68 @@ program
     }
 
     console.log(`\n✨ Queue Complete! Processed ${appliedCount + skippedCount} jobs (${appliedCount} applied/already applied, ${skippedCount} skipped/failed).`);
+  });
+
+// Command 4b: indeed-apply
+program
+  .command('indeed-apply')
+  .description('Apply to top evaluated Indeed Easily Apply jobs with AI Form Solver')
+  .option('--id <externalJobId>', 'Specific Indeed Job ID to apply')
+  .option('--min-score <score>', 'Minimum threshold score (0.0 - 5.0)', CONFIG.minScoreThreshold.toString())
+  .option('--auto', 'Run in 100% automatic hands-free mode without confirmation prompt', false)
+  .option('--limit <n>', 'Max applications per session', '25')
+  .action(async (options) => {
+    const minScore = parseFloat(options.minScore);
+    const sessionLimit = parseInt(options.limit, 10);
+    const db = getDb();
+
+    let jobsToApply: any[] = [];
+    if (options.id) {
+      jobsToApply = db.prepare(`SELECT * FROM jobs WHERE external_job_id = ?`).all(options.id);
+    } else {
+      jobsToApply = getUnappliedJobs('indeed', minScore);
+    }
+
+    if (jobsToApply.length === 0) {
+      console.log(`⚠️ No unapplied Indeed jobs found matching criteria (Min Score: ${minScore}). Run indeed-scan & evaluate first.`);
+      return;
+    }
+
+    if (jobsToApply.length > sessionLimit) {
+      console.log(`⚠️ [Safety Cap] ${jobsToApply.length} jobs queued. Limiting to ${sessionLimit} applications this session.`);
+      jobsToApply = jobsToApply.slice(0, sessionLimit);
+    }
+
+    console.log(`📋 Found ${jobsToApply.length} Indeed job(s) ready for application (Auto Mode: ${options.auto ? 'ENABLED ⚡' : 'DISABLED ✋'}).\n`);
+    let appliedCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 0; i < jobsToApply.length; i++) {
+      const job: any = jobsToApply[i];
+      console.log(`--------------------------------------------------`);
+      console.log(`📌 Processing job [${i + 1}/${jobsToApply.length}]: "${job.title}" at ${job.company}`);
+
+      const result = await applyIndeedJob(job, { autoSubmit: options.auto });
+
+      if (result === 'connection_error' || result === 'not_logged_in') {
+        console.log(`\n🛑 Aborting job queue due to browser session or CDP connection error.`);
+        break;
+      }
+
+      if (result === 'applied' || result === 'already_applied') {
+        appliedCount++;
+      } else {
+        skippedCount++;
+      }
+
+      if (i < jobsToApply.length - 1) {
+        const interJobPause = 5000 + Math.floor(Math.random() * 8000);
+        console.log(`⏳ Waiting ${(interJobPause / 1000).toFixed(1)}s before next application...`);
+        await new Promise(r => setTimeout(r, interJobPause));
+      }
+    }
+
+    console.log(`\n✨ Queue Complete! Processed ${appliedCount + skippedCount} Indeed jobs (${appliedCount} applied/already applied, ${skippedCount} skipped/failed).`);
   });
 
 // Command 5: status

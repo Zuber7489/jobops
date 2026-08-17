@@ -3,7 +3,7 @@ import { CONFIG } from '../config';
 
 export interface JobRecord {
   id?: number;
-  platform: 'naukri' | 'linkedin';
+  platform: 'linkedin' | 'indeed' | 'naukri';
   external_job_id: string;
   title: string;
   company: string;
@@ -95,7 +95,7 @@ export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number
   return info.lastInsertRowid as number;
 }
 
-export function getUnappliedJobs(platform?: 'naukri' | 'linkedin', minScore: number = 0): JobRecord[] {
+export function getUnappliedJobs(platform?: JobRecord['platform'], minScore: number = 0): JobRecord[] {
   const db = getDb();
   if (platform) {
     return db.prepare(`

@@ -11,19 +11,29 @@ npm run dashboard
 npx ts-node src/index.ts launch-chrome
 ```
 
-## Step 2: Scan Pan-India Remote & Hybrid Easy Apply Jobs
+## Step 2a: Scan LinkedIn Remote & Hybrid Easy Apply Jobs
 ```bash
 npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 3
 ```
 
-## Step 3: Evaluate Scanned Jobs with Gemini 2.5 Flash AI
+## Step 2b: Scan Indeed Remote & Hybrid Easily Apply Jobs
+```bash
+npx ts-node src/index.ts indeed-scan --query "Angular Developer" --location "India" --pages 3
+```
+
+## Step 3: Evaluate Scanned Jobs with Gemini AI Matcher
 ```bash
 npx ts-node src/index.ts evaluate
 ```
 
-## Step 4: Run 100% Hands-Free AI Auto-Apply
+## Step 4a: Run LinkedIn Hands-Free AI Auto-Apply
 ```bash
 npx ts-node src/index.ts linkedin-apply --min-score 2.5 --auto
+```
+
+## Step 4b: Run Indeed Hands-Free AI Auto-Apply
+```bash
+npx ts-node src/index.ts indeed-apply --min-score 2.5 --auto
 ```
 
 ## Step 5: Check Dashboard & Application History
