@@ -27,9 +27,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:27:09",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:40:44"
   },
   {
     "id": 1828,
@@ -43,9 +43,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 12:27:07",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:40:14"
   },
   {
     "id": 1825,
@@ -107,9 +107,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 12:26:53",
-    "applied_at": null
+    "applied_at": "2026-08-17 12:39:21"
   },
   {
     "id": 1819,
