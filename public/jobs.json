@@ -11,9 +11,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": "2026-08-17 13:58:49"
+    "applied_at": null
   },
   {
     "id": 2052,
@@ -27,9 +27,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": "2026-08-17 13:55:53"
+    "applied_at": null
   },
   {
     "id": 2049,
@@ -59,9 +59,9 @@
     "apply_type": "easy-apply",
     "score": 1.7999999999999998,
     "evaluation_reason": "Matched: angular",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": "2026-08-17 13:59:13"
+    "applied_at": null
   },
   {
     "id": 2043,
@@ -91,9 +91,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "skipped",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:37",
-    "applied_at": "2026-08-17 13:58:27"
+    "applied_at": null
   },
   {
     "id": 2037,
@@ -107,9 +107,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:37",
-    "applied_at": "2026-08-17 13:58:05"
+    "applied_at": null
   },
   {
     "id": 2034,
@@ -123,9 +123,9 @@
     "apply_type": "easy-apply",
     "score": 1.5999999999999996,
     "evaluation_reason": "Matched: angular, full stack",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:37",
-    "applied_at": "2026-08-17 13:59:52"
+    "applied_at": null
   },
   {
     "id": 2031,
@@ -155,9 +155,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": "2026-08-17 13:57:28"
+    "applied_at": null
   },
   {
     "id": 2025,
@@ -203,9 +203,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": "2026-08-17 13:54:21"
+    "applied_at": null
   },
   {
     "id": 2016,
@@ -219,9 +219,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": "2026-08-17 13:54:06"
+    "applied_at": null
   },
   {
     "id": 2013,
@@ -235,9 +235,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:35",
-    "applied_at": "2026-08-17 13:53:33"
+    "applied_at": null
   },
   {
     "id": 2010,
@@ -251,9 +251,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "applied",
+    "status": "evaluated",
     "scanned_at": "2026-08-17 13:51:35",
-    "applied_at": "2026-08-17 13:54:53"
+    "applied_at": null
   },
   {
     "id": 1845,

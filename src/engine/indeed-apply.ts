@@ -188,6 +188,13 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
       }
     }
 
+    // Filter out external career site redirects
+    if (!activePage.url().includes('indeed.com') && !activePage.url().includes('indeedapply')) {
+      console.log(`⏩ External site redirect ("${activePage.url()}"). Skipping.`);
+      updateJobStatus(job.external_job_id, 'skipped');
+      return 'skipped';
+    }
+
     await humanDelay(activePage, 2500, 4000);
 
     // Multi-step form loop (max 10 steps for SmartApply)
@@ -201,8 +208,27 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
         frameOrPage = iframeElement;
       }
 
-      const submitBtn = frameOrPage.locator('button:has-text("Submit your application"), button:has-text("Submit application"), button:has-text("Submit"), button[class*="submit"], button[class*="Submit"]').first();
-      const continueBtn = frameOrPage.locator('button:has-text("Continue"), button:has-text("Next"), button:has-text("Review your application"), button[class*="continueButton"], button[class*="ContinueButton"]').first();
+      const submitBtn = await findVisibleElement(frameOrPage, [
+        'button:has-text("Submit your application")',
+        'button:has-text("Submit application")',
+        'button:has-text("Submit")',
+        'button[class*="submit"]',
+        'button[class*="Submit"]'
+      ], 1500);
+
+      const continueBtn = await findVisibleElement(frameOrPage, [
+        'button:has-text("Continue")',
+        'button:has-text("Next")',
+        'button:has-text("Review your application")',
+        'button[data-testid="continue-button"]',
+        'button[class*="continueButton"]',
+        'button[class*="ContinueButton"]',
+        'button[class*="ia-ContinueButton"]',
+        'button[class*="ia-continueButton"]',
+        'footer button',
+        'div[data-testid="footer"] button',
+        'button[type="submit"]'
+      ], 4000);
 
       // Step A: Fill text / number inputs
       try {
@@ -265,7 +291,7 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
       }
 
       // Step C: Check Submit button
-      if (await submitBtn.isVisible().catch(() => false)) {
+      if (submitBtn) {
         console.log(`📌 Reached final Review & Submit step on Indeed!`);
 
         await simulateMouseMovement(activePage);
@@ -281,7 +307,7 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
 
       // Step D: Click Continue / Next button
       let clickedContinue = false;
-      if (await continueBtn.isVisible().catch(() => false)) {
+      if (continueBtn) {
         console.log(`➡️ Step ${step}: Proceeding to next step...`);
         await humanDelay(activePage, 500, 1200);
         await continueBtn.click();
@@ -319,8 +345,8 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
           }
         }
 
-        const retryBtn = continueBtn.isVisible() ? continueBtn : submitBtn;
-        if (await retryBtn.isVisible().catch(() => false)) {
+        const retryBtn = continueBtn || submitBtn;
+        if (retryBtn) {
           await retryBtn.click().catch(() => null);
           await humanDelay(activePage, 1500, 2500);
         }
@@ -333,7 +359,7 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
         }
       }
 
-      if (!clickedContinue && !(await submitBtn.isVisible().catch(() => false))) {
+      if (!clickedContinue && !submitBtn) {
         const successMsg = activePage.locator('div:has-text("Your application has been submitted"), div:has-text("Application submitted"), h1:has-text("Application submitted")').first();
         if (await successMsg.isVisible().catch(() => false)) {
           console.log(`🎉 [Indeed Apply Success] Application submitted for "${job.title}" at ${job.company}!`);
@@ -344,8 +370,9 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
       }
     }
 
-    updateJobStatus(job.external_job_id, 'applied');
-    return 'applied';
+    console.log(`⚠️ Indeed form did not complete submission. Marking as failed for retry.`);
+    updateJobStatus(job.external_job_id, 'failed');
+    return 'failed';
 
   } catch (err: any) {
     console.error(`❌ [Indeed Apply Error]: ${err.message}`);
