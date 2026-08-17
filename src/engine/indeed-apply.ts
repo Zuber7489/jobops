@@ -68,16 +68,44 @@ async function findVisibleElement(page: Page, selectors: string[], timeoutMs: nu
 }
 
 function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: string): string {
+  const profile = loadProfile();
   let answer = (rawAnswer || '').trim();
+  const lowerLabel = labelText.toLowerCase();
+
+  // 1. Notice period / Lead time / joining days
+  if (/notice|lead time|join|days|joining/i.test(lowerLabel) && !/salary|ctc|compensation/i.test(lowerLabel)) {
+    return (profile.noticePeriodDays || 1).toString();
+  }
+
+  // 2. Current Compensation / Salary
+  if (/current/i.test(lowerLabel) && /compensation|salary|ctc|inr|package/i.test(lowerLabel)) {
+    if (/lpa|lakh/i.test(lowerLabel)) {
+      return (profile.currentCtcLpa || 3.2).toString();
+    }
+    return Math.round((profile.currentCtcLpa || 3.2) * 100000).toString();
+  }
+
+  // 3. Expected Compensation / Salary Expectations
+  if ((/expect/i.test(lowerLabel) || /desire/i.test(lowerLabel)) && /compensation|salary|ctc|inr|package|expectation/i.test(lowerLabel)) {
+    if (/lpa|lakh/i.test(lowerLabel)) {
+      return (profile.expectedCtcLpa || 6.5).toString();
+    }
+    return Math.round((profile.expectedCtcLpa || 6.5) * 100000).toString();
+  }
+
+  // 4. Generic Numeric fields (YOE, Phone, etc.)
   const isNumericField = inputType === 'number' ||
-    /notice|period|day|year|experience|ctc|salary|compensation|package|phone|mobile/i.test(labelText);
+    /period|day|year|experience|ctc|salary|compensation|package|phone|mobile/i.test(lowerLabel);
 
   if (isNumericField) {
-    const digitsOnly = answer.replace(/[^\d]/g, '');
-    if (digitsOnly) {
+    const digitsOnly = answer.replace(/[^\d.]/g, '');
+    if (digitsOnly && digitsOnly !== '0') {
       answer = digitsOnly;
+    } else if (/experience|yoe/i.test(lowerLabel)) {
+      answer = (profile.totalYoe || 2.5).toString();
     }
   }
+
   return answer;
 }
 
@@ -267,8 +295,9 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
         // Soft catch
       }
 
-      // Step B: Choice / Radio / Resume Option selection
+      // Step B: Choice / Radio / Checkbox / Dropdown Selection
       try {
+        // B1: Resume selection card
         const resumeCards = frameOrPage.locator('div[class*="resume"], label[class*="resume"], div[class*="Resume"]');
         if (await resumeCards.count() > 0) {
           const firstCard = resumeCards.first();
@@ -278,12 +307,68 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
           }
         }
 
+        // B2: Radio buttons (e.g. Yes/No)
         const radios = frameOrPage.locator('input[type="radio"]');
         if (await radios.count() > 0) {
           const firstRadio = radios.first();
           if (await firstRadio.isVisible().catch(() => false)) {
             await firstRadio.click().catch(() => null);
             await activePage.waitForTimeout(300);
+          }
+        }
+
+        // B3: Checkboxes (e.g. "Agree" / Privacy / Terms / Declaration)
+        const checkboxes = frameOrPage.locator('input[type="checkbox"], label:has-text("Agree"), label:has-text("Terms"), label:has-text("Privacy")');
+        const cbCount = await checkboxes.count();
+        for (let c = 0; c < cbCount; c++) {
+          const cb = checkboxes.nth(c);
+          if (await cb.isVisible().catch(() => false)) {
+            const isChecked = await cb.isChecked().catch(() => false);
+            if (!isChecked) {
+              console.log(`☑️ Checking agreement checkbox...`);
+              await cb.click({ force: true }).catch(() => null);
+              await activePage.waitForTimeout(300);
+            }
+          }
+        }
+
+        // B4: Select Dropdowns & Comboboxes (e.g. "In which city would you prefer to work?")
+        const selects = frameOrPage.locator('select, div[role="combobox"]');
+        const selectCount = await selects.count();
+        for (let s = 0; s < selectCount; s++) {
+          const sel = selects.nth(s);
+          if (await sel.isVisible().catch(() => false)) {
+            const tagName = await sel.evaluate((el: any) => el.tagName.toLowerCase()).catch(() => '');
+            if (tagName === 'select') {
+              const options = sel.locator('option');
+              const optCount = await options.count();
+              if (optCount > 1) {
+                let selectVal = '';
+                for (let o = 1; o < optCount; o++) {
+                  const optText = (await options.nth(o).textContent().catch(() => '')) || '';
+                  if (/remote|indore|india|pune|bangalore|hyderabad|chennai|any|yes/i.test(optText)) {
+                    selectVal = await options.nth(o).getAttribute('value').catch(() => '') || optText;
+                    break;
+                  }
+                }
+                if (!selectVal && optCount > 1) {
+                  selectVal = await options.nth(1).getAttribute('value').catch(() => '') || '1';
+                }
+                if (selectVal) {
+                  console.log(`🔽 Selecting dropdown option: "${selectVal}"`);
+                  await sel.selectOption(selectVal).catch(() => null);
+                  await activePage.waitForTimeout(400);
+                }
+              }
+            } else {
+              await sel.click().catch(() => null);
+              await activePage.waitForTimeout(400);
+              const firstOpt = activePage.locator('li[role="option"], div[role="option"], div[class*="option"]').first();
+              if (await firstOpt.isVisible().catch(() => false)) {
+                await firstOpt.click().catch(() => null);
+                await activePage.waitForTimeout(400);
+              }
+            }
           }
         }
       } catch {
@@ -324,10 +409,20 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
       }
 
       // Step E: Form validation error check
-      const errorMsg = frameOrPage.locator('div[class*="error"], span[class*="error"], div[role="alert"]').first();
+      const errorMsg = frameOrPage.locator('div[id*="error"], span[id*="error"], p[class*="error"], div[class*="error"], span[class*="error"], div[role="alert"], p:has-text("Choose an option"), div:has-text("Choose an option"), span:has-text("required")').first();
       if (await errorMsg.isVisible().catch(() => false)) {
         const errText = (await errorMsg.textContent().catch(() => ''))?.trim() || 'Validation error';
         console.log(`⚠️ Indeed form validation error: "${errText}". Re-solving with Gemini AI...`);
+
+        // Re-check checkboxes
+        const checkboxes = frameOrPage.locator('input[type="checkbox"], label:has-text("Agree"), label:has-text("Terms")');
+        const cbCount = await checkboxes.count();
+        for (let c = 0; c < cbCount; c++) {
+          const cb = checkboxes.nth(c);
+          if (await cb.isVisible().catch(() => false)) {
+            await cb.click({ force: true }).catch(() => null);
+          }
+        }
 
         const inputsToFix = frameOrPage.locator('input:not([type="hidden"]), textarea');
         const countToFix = await inputsToFix.count();
