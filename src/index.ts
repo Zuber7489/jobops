@@ -187,12 +187,21 @@ program
     let appliedCount = 0;
     let skippedCount = 0;
 
+    const { chromium } = require('playwright');
+    let browserContext: any = null;
+    try {
+      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
+      browserContext = browser.contexts()[0] || await browser.newContext();
+    } catch {
+      console.log(`⚠️ Chrome CDP connection port ${CONFIG.cdpPort} failed. Make sure Chrome is open.`);
+    }
+
     for (let i = 0; i < jobsToApply.length; i++) {
       const job: any = jobsToApply[i];
       console.log(`--------------------------------------------------`);
       console.log(`📌 Processing job [${i + 1}/${jobsToApply.length}]: "${job.title}" at ${job.company}`);
 
-      const result = await applyIndeedJob(job, { autoSubmit: options.auto });
+      const result = await applyIndeedJob(job, { autoSubmit: options.auto, browserContext });
 
       if (result === 'connection_error' || result === 'not_logged_in') {
         console.log(`\n🛑 Aborting job queue due to browser session or CDP connection error.`);

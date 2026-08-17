@@ -7,6 +7,7 @@ import { answerQuestionWithGemini } from './gemini';
 
 export interface ApplyOptions {
   autoSubmit?: boolean;
+  browserContext?: BrowserContext;
 }
 
 export type ApplyResult = 'applied' | 'skipped' | 'already_applied' | 'connection_error' | 'not_logged_in' | 'failed' | 'limit_reached';
@@ -72,7 +73,17 @@ function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: st
   let answer = (rawAnswer || '').trim();
   const lowerLabel = labelText.toLowerCase();
 
-  // 0. Date inputs (e.g. "Available Start Date", "Start date", input[type="date"])
+  // 0a. LinkedIn Profile URL
+  if (/linkedin/i.test(lowerLabel)) {
+    return profile.linkedin || 'https://www.linkedin.com/in/mohammadzuber/';
+  }
+
+  // 0b. Website / Portfolio / GitHub URL
+  if (/website|portfolio|github|link|url|site/i.test(lowerLabel)) {
+    return profile.linkedin || 'https://www.linkedin.com/in/mohammadzuber/';
+  }
+
+  // 0c. Date inputs (e.g. "Available Start Date", "Start date", input[type="date"])
   if (inputType === 'date' || (/start date|available date|date/i.test(lowerLabel) && !/notice|period|ctc|salary|experience/i.test(lowerLabel))) {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -81,8 +92,31 @@ function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: st
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  // 0d. Combined Current CTC and Expected CTC in one question (e.g. "What is your CTC and ECTC ?")
+  if ((lowerLabel.includes('ctc') || lowerLabel.includes('salary') || lowerLabel.includes('compensation')) && (lowerLabel.includes('ectc') || (lowerLabel.includes('current') && lowerLabel.includes('expect')))) {
+    return `Current CTC: ${profile.currentCtcLpa} LPA, Expected CTC: ${profile.expectedCtcLpa} LPA`;
+  }
+
+  // 0e. Skills candidate DOES NOT HAVE (PHP, Laravel, Python, Java, C#, .NET, Flutter, Ruby, Go, AWS, Docker)
+  if (/php|laravel|python|ruby|golang|\bc\+\+|\bc#|\bnet\b|\bdotnet\b|flutter|swift|kotlin|django|flask|rails|kubernetes|docker|devops/i.test(lowerLabel) && !/javascript|typescript|angular|node|html|css|rxjs|sql|git|ui|frontend|web/i.test(lowerLabel)) {
+    if (/experience|years|yoe|have/i.test(lowerLabel)) {
+      return '0';
+    }
+  }
+
+  // 0f. Core skills candidate HAS (Node.js, Angular, TypeScript, Frontend, Fullstack)
+  if (/node|express|mongo|backend|full\s*stack|fullstack/i.test(lowerLabel) && /experience|years|yoe|have/i.test(lowerLabel)) {
+    return '2';
+  }
+  if (/angular|typescript|rxjs|javascript|html|css|frontend|ui|web/i.test(lowerLabel) && /experience|years|yoe|have/i.test(lowerLabel)) {
+    return '2.5';
+  }
+
   // 1. Notice period / Lead time / joining days
   if (/notice|lead time|join|days|joining/i.test(lowerLabel) && !/salary|ctc|compensation/i.test(lowerLabel)) {
+    if (inputType === 'textarea' || /explain|describe|text/i.test(lowerLabel)) {
+      return '1 day';
+    }
     return (profile.noticePeriodDays || 1).toString();
   }
 
@@ -135,25 +169,39 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
 
   let browserContext: BrowserContext | null = null;
   let page: Page | null = null;
+  let activePage: Page | null = null;
 
   try {
-    // Connect to active Chrome session via CDP
-    try {
-      console.log(`🔌 Connecting to active Chrome session on CDP port ${CONFIG.cdpPort}...`);
-      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
-      browserContext = browser.contexts()[0] || await browser.newContext();
-      page = await browserContext.newPage();
-      console.log(`✅ Connected to active Chrome session!`);
+    if (options.browserContext) {
+      browserContext = options.browserContext;
+      const pages = browserContext.pages();
+      const nonBlankPage = pages.find(p => p.url() !== 'about:blank' && !p.url().startsWith('chrome:'));
+      page = nonBlankPage || (pages.length > 0 ? pages[0] : await browserContext.newPage());
       await page.bringToFront().catch(() => null);
-    } catch (cdpErr) {
-      console.log(`🌐 CDP session not detected. Launching persistent browser context for Indeed auto-apply...`);
-      const userDataDir = path.resolve(process.cwd(), '.chrome-user-data');
-      browserContext = await chromium.launchPersistentContext(userDataDir, {
-        headless: false,
-        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--start-maximized'],
-        viewport: null
-      });
-      page = browserContext.pages()[0] || await browserContext.newPage();
+    } else {
+      // Connect to active Chrome session via CDP
+      try {
+        console.log(`🔌 Connecting to active Chrome session on CDP port ${CONFIG.cdpPort}...`);
+        const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
+        browserContext = browser.contexts()[0] || await browser.newContext();
+        
+        const pages = browserContext.pages();
+        const nonBlankPage = pages.find(p => p.url() !== 'about:blank' && !p.url().startsWith('chrome:'));
+        page = nonBlankPage || (pages.length > 0 ? pages[0] : await browserContext.newPage());
+
+        for (const p of pages) {
+          if (p !== page && (p.url() === 'about:blank' || p.url() === 'chrome://newtab/')) {
+            await p.close().catch(() => null);
+          }
+        }
+
+        console.log(`✅ Connected to active Chrome tab!`);
+        await page.bringToFront().catch(() => null);
+      } catch (cdpErr: any) {
+        console.log(`⚠️ Chrome CDP port ${CONFIG.cdpPort} connection failed (${cdpErr.message}).`);
+        console.log(`💡 Tip: Run "npx ts-node src/index.ts launch-chrome" to open your logged-in Chrome session.`);
+        return 'connection_error';
+      }
     }
 
     console.log(`🌐 Navigating to Indeed job page: ${job.url}`);
@@ -316,13 +364,73 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
           }
         }
 
-        // B2: Radio buttons (e.g. Yes/No)
-        const radios = frameOrPage.locator('input[type="radio"]');
-        if (await radios.count() > 0) {
-          const firstRadio = radios.first();
-          if (await firstRadio.isVisible().catch(() => false)) {
-            await firstRadio.click().catch(() => null);
-            await activePage.waitForTimeout(300);
+        // B2: Radio buttons (smart choice matching with Gemini AI & candidate experience)
+        const radioGroups = frameOrPage.locator('fieldset, div[role="radiogroup"], div[class*="ia-Radio"]');
+        const rgCount = await radioGroups.count();
+
+        if (rgCount > 0) {
+          for (let rg = 0; rg < rgCount; rg++) {
+            const group = radioGroups.nth(rg);
+            if (await group.isVisible().catch(() => false)) {
+              let qText = (await group.locator('legend, label, h3, span').first().textContent().catch(() => '')) || '';
+              qText = qText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+
+              const radios = group.locator('label, input[type="radio"]');
+              const rCount = await radios.count();
+              if (rCount > 0) {
+                const optLabels: string[] = [];
+                for (let r = 0; r < rCount; r++) {
+                  const txt = (await radios.nth(r).textContent().catch(() => '')) || '';
+                  if (txt.trim()) optLabels.push(txt.trim());
+                }
+
+                let aiChoice = await answerQuestionWithGemini(
+                  `Question: "${qText}". Choose single best option from: [${optLabels.join(', ')}]. Candidate YOE is 2.5 years (Angular/Frontend), Notice period 1 day.`,
+                  job.title
+                );
+                aiChoice = aiChoice.trim();
+                console.log(`💡 Radio Question: "${qText}" ➔ AI Choice: "${aiChoice}"`);
+
+                let clickedRadio = false;
+                for (let r = 0; r < rCount; r++) {
+                  const radio = radios.nth(r);
+                  const txt = (await radio.textContent().catch(() => '')) || '';
+                  if (txt && new RegExp(aiChoice, 'i').test(txt)) {
+                    await radio.click({ force: true }).catch(() => null);
+                    await activePage.waitForTimeout(300);
+                    clickedRadio = true;
+                    break;
+                  }
+                }
+
+                if (!clickedRadio) {
+                  for (let r = 0; r < rCount; r++) {
+                    const radio = radios.nth(r);
+                    const txt = (await radio.textContent().catch(() => '')) || '';
+                    if (/1-2|2-3|3-4|1 to 2|2 to 3|3 to 4|yes/i.test(txt)) {
+                      await radio.click({ force: true }).catch(() => null);
+                      await activePage.waitForTimeout(300);
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          const radios = frameOrPage.locator('input[type="radio"]');
+          if (await radios.count() > 0) {
+            for (let r = 0; r < await radios.count(); r++) {
+              const radio = radios.nth(r);
+              if (await radio.isVisible().catch(() => false)) {
+                const labelTxt = (await radio.evaluate((el: any) => el.labels?.[0]?.textContent || el.parentElement?.textContent || '').catch(() => '')) || '';
+                if (/1-2|2-3|3-4|1 to 2|2 to 3|3 to 4|yes/i.test(labelTxt) || r === 0) {
+                  await radio.click({ force: true }).catch(() => null);
+                  await activePage.waitForTimeout(300);
+                  break;
+                }
+              }
+            }
           }
         }
 
@@ -496,7 +604,10 @@ export async function applyIndeedJob(job: JobRecord, options: ApplyOptions = { a
     updateJobStatus(job.external_job_id, 'failed');
     return 'failed';
   } finally {
-    if (page) {
+    if (activePage && activePage !== page) {
+      await activePage.close().catch(() => null);
+    }
+    if (page && !options.browserContext) {
       await page.close().catch(() => null);
     }
   }

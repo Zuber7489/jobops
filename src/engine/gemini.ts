@@ -173,6 +173,26 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
       return profile.location || 'Indore, Madhya Pradesh';
     }
 
+    // Combined Current CTC and Expected CTC in one question (e.g. "What is your CTC and ECTC ?")
+    if ((qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation')) && (qLower.includes('ectc') || (qLower.includes('current') && qLower.includes('expect')))) {
+      return `Current CTC: ${profile.currentCtcLpa} LPA, Expected CTC: ${profile.expectedCtcLpa} LPA`;
+    }
+
+    // Skills candidate DOES NOT HAVE (PHP, Laravel, Python, Java, C#, .NET, Flutter, Ruby, Go, AWS, Docker)
+    if (/php|laravel|python|ruby|golang|\bc\+\+|\bc#|\bnet\b|\bdotnet\b|flutter|swift|kotlin|django|flask|rails|kubernetes|docker|devops/i.test(qLower) && !/javascript|typescript|angular|node|html|css|rxjs|sql|git|ui|frontend|web/i.test(qLower)) {
+      if (/experience|years|yoe|have/i.test(qLower)) {
+        return '0';
+      }
+    }
+
+    // Core skills candidate HAS (Node.js, Angular, TypeScript, Frontend, Fullstack)
+    if (/node|express|mongo|backend|full\s*stack|fullstack/i.test(qLower) && /experience|years|yoe|have/i.test(qLower)) {
+      return '2';
+    }
+    if (/angular|typescript|rxjs|javascript|html|css|frontend|ui|web/i.test(qLower) && /experience|years|yoe|have/i.test(qLower)) {
+      return '2.5';
+    }
+
     // Current Compensation / CTC / Salary / Package
     if (qLower.includes('current') || qLower.includes('present') || qLower.includes('existing')) {
       if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
@@ -194,12 +214,12 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     }
 
     if (qLower.includes('notice period') || qLower.includes('how soon can you join') || qLower.includes('start date')) {
-      return profile.noticePeriodDays.toString(); // 1
+      return '1 day';
     }
 
     // Total / Overall years of experience
     if (qLower.includes('total') && qLower.includes('experience')) {
-      return Math.floor(profile.totalYoe).toString(); // 2
+      return '2.5';
     }
 
     // College / Education / Degree Start & End Dates

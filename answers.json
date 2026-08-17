@@ -152,5 +152,7 @@
   "why do you want to join our company?": "I am drawn to your company because of your commitment to building scalable, high-performance enterprise solutions, which aligns perfectly with my background in Angular SSR and performance optimization. Having spent the last two years architecting complex, data-driven applications—such as my AI-powered interview platform—I am eager to contribute my technical expertise in Angular Signals, RxJS, and clean architecture to your engineering team. Your reputation for innovation provides the ideal environment for me to tackle complex frontend challenges while continuing to grow as a dedicated software engineer.",
   "what: job title, keywords or company": "Angular Developer",
   "staff engineer, frontend angularjs": "0",
-  "associate staff engineer, frontend angularjs": "0"
+  "associate staff engineer, frontend angularjs": "0",
+  "frontend web developer [three.js]": "0",
+  "search: job title, keywords, or company": "Full Stack Developer"
 }
