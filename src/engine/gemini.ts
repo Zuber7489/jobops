@@ -148,78 +148,80 @@ Return ONLY valid JSON:
   return { score: 3.5, reason: 'Gemini AI Rule Baseline' };
 }
 
-export async function answerQuestionWithGemini(questionText: string, jobTitle: string): Promise<string> {
+export async function answerQuestionWithGemini(questionText: string, jobTitle: string, validationError?: string): Promise<string> {
   const profile = loadProfile();
   const qLower = questionText.toLowerCase().trim();
 
-  // 1. Exact Contact & Standard Metric Direct Mappings
-  if (qLower.includes('first name') || qLower.includes('given name')) {
-    return profile.name.split(' ')[0] || 'Mohammad';
-  }
-  if (qLower.includes('last name') || qLower.includes('surname') || qLower.includes('family name')) {
-    return profile.name.split(' ').slice(1).join(' ') || 'Zuber';
-  }
-  if (qLower.includes('full name') || qLower === 'name') {
-    return profile.name;
-  }
-  if (qLower.includes('phone') || qLower.includes('mobile') || qLower.includes('contact number')) {
-    return profile.phone;
-  }
-  if (qLower.includes('email') || qLower.includes('e-mail')) {
-    return profile.email;
-  }
-  if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
-    return profile.location || 'Indore, Madhya Pradesh';
-  }
+  // 1. Exact Contact & Standard Metric Direct Mappings (Skip if fixing validation error)
+  if (!validationError) {
+    if (qLower.includes('first name') || qLower.includes('given name')) {
+      return profile.name.split(' ')[0] || 'Mohammad';
+    }
+    if (qLower.includes('last name') || qLower.includes('surname') || qLower.includes('family name')) {
+      return profile.name.split(' ').slice(1).join(' ') || 'Zuber';
+    }
+    if (qLower.includes('full name') || qLower === 'name') {
+      return profile.name;
+    }
+    if (qLower.includes('phone') || qLower.includes('mobile') || qLower.includes('contact number')) {
+      return profile.phone;
+    }
+    if (qLower.includes('email') || qLower.includes('e-mail')) {
+      return profile.email;
+    }
+    if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
+      return profile.location || 'Indore, Madhya Pradesh';
+    }
 
-  // Current Compensation / CTC / Salary / Package
-  if (qLower.includes('current') || qLower.includes('present') || qLower.includes('existing')) {
-    if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
-      if (qLower.includes('lpa') || qLower.includes('lakh')) {
-        return profile.currentCtcLpa.toString(); // 3.2
+    // Current Compensation / CTC / Salary / Package
+    if (qLower.includes('current') || qLower.includes('present') || qLower.includes('existing')) {
+      if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
+        if (qLower.includes('lpa') || qLower.includes('lakh')) {
+          return profile.currentCtcLpa.toString(); // 3.2
+        }
+        return (profile.currentCtcLpa * 100000).toString(); // 320000
       }
-      return (profile.currentCtcLpa * 100000).toString(); // 320000
     }
-  }
 
-  // Expected Compensation / CTC / Salary / Package
-  if (qLower.includes('expected') || qLower.includes('desired') || qLower.includes('requirement')) {
-    if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
-      if (qLower.includes('lpa') || qLower.includes('lakh')) {
-        return profile.expectedCtcLpa.toString(); // 6.5
+    // Expected Compensation / CTC / Salary / Package
+    if (qLower.includes('expected') || qLower.includes('desired') || qLower.includes('requirement')) {
+      if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation') || qLower.includes('package') || qLower.includes('pay')) {
+        if (qLower.includes('lpa') || qLower.includes('lakh')) {
+          return profile.expectedCtcLpa.toString(); // 6.5
+        }
+        return (profile.expectedCtcLpa * 100000).toString(); // 650000
       }
-      return (profile.expectedCtcLpa * 100000).toString(); // 650000
     }
-  }
 
-  if (qLower.includes('notice period') || qLower.includes('how soon can you join') || qLower.includes('start date')) {
-    return profile.noticePeriodDays.toString(); // 15
-  }
-
-  // Total / Overall years of experience
-  if (qLower.includes('total') && qLower.includes('experience')) {
-    return Math.floor(profile.totalYoe).toString(); // 2
-  }
-
-  // College / Education / Degree Start & End Dates
-  if (qLower.includes('college') || qLower.includes('degree') || qLower.includes('education') || qLower.includes('school')) {
-    if (qLower.includes('start') || qLower.includes('from')) {
-      if (qLower.includes('month')) return 'June';
-      if (qLower.includes('year')) return '2020';
-      return 'June 2020';
+    if (qLower.includes('notice period') || qLower.includes('how soon can you join') || qLower.includes('start date')) {
+      return profile.noticePeriodDays.toString(); // 1
     }
-    if (qLower.includes('end') || qLower.includes('to') || qLower.includes('graduation')) {
-      if (qLower.includes('month')) return 'June';
-      if (qLower.includes('year')) return '2024';
-      return 'June 2024';
-    }
-  }
 
-  // 2. Check persistent Answers Knowledge Base (answers.json) for exact match
-  const cache = loadAnswersCache();
-  if (cache[qLower]) {
-    console.log(`🧠 [Knowledge Base Hit] "${questionText}" ➔ "${cache[qLower]}"`);
-    return cache[qLower];
+    // Total / Overall years of experience
+    if (qLower.includes('total') && qLower.includes('experience')) {
+      return Math.floor(profile.totalYoe).toString(); // 2
+    }
+
+    // College / Education / Degree Start & End Dates
+    if (qLower.includes('college') || qLower.includes('degree') || qLower.includes('education') || qLower.includes('school')) {
+      if (qLower.includes('start') || qLower.includes('from')) {
+        if (qLower.includes('month')) return 'June';
+        if (qLower.includes('year')) return '2020';
+        return 'June 2020';
+      }
+      if (qLower.includes('end') || qLower.includes('to') || qLower.includes('graduation')) {
+        if (qLower.includes('month')) return 'June';
+        if (qLower.includes('year')) return '2024';
+        return 'June 2024';
+      }
+    }
+
+    // 2. Check persistent Answers Knowledge Base (answers.json) for exact match
+    const cache = loadAnswersCache();
+    if (cache[qLower]) {
+      console.log(`🧠 [Knowledge Base Hit] "${questionText}" ➔ "${cache[qLower]}"`);
+      return cache[qLower];
+    }
   }
 
   // 3. Dynamic Gemini AI Reasoning Engine for ALL skill, custom, and new questions
@@ -242,7 +244,7 @@ Candidate Core Profile:
 - Email: ${profile.email}
 - Phone: ${profile.phone}
 - Location: ${profile.location}
-- Notice Period: ${profile.noticePeriodDays} days
+- Notice Period: ${profile.noticePeriodDays} day
 - Total Professional Experience: ${Math.floor(profile.totalYoe)} years
 - Relevant Angular/Frontend Experience: 2 years
 - Current Salary / CTC: 3.2 LPA (320000 INR)
@@ -250,20 +252,28 @@ Candidate Core Profile:
 
 Question asked on application form:
 "${questionText}"
+${validationError ? `\nCRITICAL FORM VALIDATION ERROR TO FIX: The input field rejected previous response with error: "${validationError}".
+If the error says "Enter a decimal number larger than 0.0" or "Enter a whole number", the field STRICTLY requires a pure numeric value (e.g., 2 or 1). DO NOT OUTPUT PARAGRAPHS OR TEXT. Output ONLY the raw number or single valid value!` : ''}
 
 Instructions & Response Rules:
 1. Read the candidate's resume carefully.
-2. If the question asks for years of experience (total or skill-specific like Angular, Node.js, RxJS, MEAN stack, HTML, CSS):
+2. If the question asks for years of experience (total or skill-specific like Angular, Node.js, RxJS, MEAN stack, HTML, CSS, Data Workflows, UI Design, Figma):
    - Output 2 if candidate has experience with that skill/role (candidate has 2 years of experience).
-   - Output 0 if candidate does NOT have experience with that skill in their resume (e.g. Java, Python, C++, Go, D3.js).
-3. If the question is a Yes/No question (e.g. "Are you comfortable commuting?", "Are you authorized to work?"):
+   - Output 0 if candidate does NOT have experience with that skill in their resume.
+3. If the question is a Yes/No question:
    - Output Yes or No based on reasonable candidate interest.
-4. Output ONLY the concise final answer string value (e.g., 2, 0, 15, 320000, 650000, Yes, No). No sentences or markdown formatting.
+4. Output ONLY the concise final answer string value (e.g., 2, 1, 0, 320000, 650000, Yes, No). No sentences, explanation, or markdown.
 `;
 
       const rawText = await callGeminiWithFallback(client, prompt);
       aiAnswer = rawText ? rawText.trim().replace(/^["']|["']$/g, '') : '';
-      console.log(`🤖 [Gemini AI Reasoned] "${questionText}" ➔ "${aiAnswer}"`);
+
+      if (validationError && /decimal|number|digit|larger than/i.test(validationError)) {
+        const numOnly = aiAnswer.replace(/[^\d.]/g, '');
+        if (numOnly) aiAnswer = numOnly;
+      }
+
+      console.log(`🤖 [Gemini AI Re-Solved Validation] "${questionText}" ➔ "${aiAnswer}"`);
     } catch (aiErr: any) {
       console.error(`⚠️ [Gemini AI Reasoning Note]: ${aiErr.message}`);
     }

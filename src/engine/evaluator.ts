@@ -12,10 +12,13 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
 
   const primaryTech = ['angular', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer', 'mean stack', 'full stack'];
   const secondaryTech = ['reactive forms', 'rest', 'jwt', 'route guards', 'interceptors', 'material', 'bootstrap', 'scss', 'css', 'html', 'git'];
-  const unrelatedTech = ['devops', 'python', 'ios', 'android', 'flutter', 'salesforce', 'servicenow', 'sharepoint', 'embedded', 'sap'];
+  const unrelatedTech = [
+    'backend', 'back-end', 'devops', 'python', 'ios', 'android', 'flutter',
+    'salesforce', 'servicenow', 'sharepoint', 'embedded', 'sap', 'qa', 'testing',
+    'data engineer', 'data scientist', 'machine learning', 'cybersecurity'
+  ];
 
   const evaluatedJobs: JobRecord[] = [];
-
   const blacklisted = profile.blacklistedCompanies || [];
 
   for (const job of jobsToEvaluate) {
@@ -34,16 +37,20 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       continue;
     }
 
+    const titleLower = job.title.toLowerCase();
     const textToMatch = `${job.title} ${job.company} ${job.jd_text}`.toLowerCase();
 
-    let score = 2.0; // Baseline candidate score
+    // Direct check for unrelated/non-Angular roles in title
+    const isUnrelatedRole = /backend|back-end|java|c\+\+|\.net|c#|python|django|flask|php|laravel|ruby|rails|golang|android|ios|flutter|react native|qa|testing|tester|data engineer|data scientist|devops|sharepoint|shopify|musician|annotation|mentor|sales|recruiter/i.test(titleLower);
+
+    let score = 1.0; // Baseline candidate score (starts at 1.0 for non-matching roles)
     const matchedKeywords: string[] = [];
 
-    // 1. Primary Stack Matching (Angular, RxJS, Signals, TS)
+    // 1. Primary Stack Matching (Angular, RxJS, Signals, TS, Frontend, UI Developer)
     for (const tech of primaryTech) {
       if (textToMatch.includes(tech)) {
         score += 0.8;
-        if (tech === 'angular') score += 0.7; // Bonus for explicit Angular title/JD
+        if (tech === 'angular') score += 1.0; // Bonus for explicit Angular title/JD
         matchedKeywords.push(tech);
       }
     }
@@ -51,16 +58,20 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
     // 2. Secondary Skill Matching
     for (const tech of secondaryTech) {
       if (textToMatch.includes(tech)) {
-        score += 0.3;
+        score += 0.2;
         if (!matchedKeywords.includes(tech)) matchedKeywords.push(tech);
       }
     }
 
-    // 3. Penalty for Unrelated Roles (DevOps, Python, Salesforce)
+    // 3. Penalty for Unrelated Technologies
     for (const tech of unrelatedTech) {
       if (textToMatch.includes(tech)) {
-        score -= 1.5;
+        score -= 1.0;
       }
+    }
+
+    if (isUnrelatedRole) {
+      score -= 2.0; // Heavily penalize non-Angular/non-Frontend titles
     }
 
     // Clamp score strictly between 1.0 and 5.0
@@ -68,7 +79,7 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
 
     const reason = matchedKeywords.length > 0
       ? `Matched: ${matchedKeywords.slice(0, 4).join(', ')}`
-      : 'General Tech Role';
+      : 'Unrelated / Low Match Role';
 
     db.prepare(`
       UPDATE jobs 

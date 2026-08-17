@@ -2,9 +2,18 @@ import { chromium, BrowserContext, Page } from 'playwright';
 import inquirer from 'inquirer';
 import path from 'path';
 import fs from 'fs';
+import { exec } from 'child_process';
 import { CONFIG, loadProfile } from '../config';
 import { updateJobStatus, JobRecord } from '../db/schema';
 import { answerQuestionWithGemini } from './gemini';
+
+/** Plays an audible alert sound for manual intervention */
+export function triggerAudioAlert() {
+  process.stdout.write('\u0007\u0007\u0007');
+  if (process.platform === 'win32') {
+    exec('powershell -c "[System.Console]::Beep(1000, 600); [System.Console]::Beep(1500, 600)"', () => null);
+  }
+}
 
 export interface ApplyOptions {
   autoSubmit?: boolean;
@@ -311,8 +320,35 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       return 'limit_reached';
     }
 
-    // Verify modal dialog actually opened
-    const modal = await findVisibleElement(page, ['div[role="dialog"]', 'div.artdeco-modal', 'div.jobs-easy-apply-content'], 6000);
+    // Verify modal dialog actually opened with expanded selectors & fallback
+    const modalSelectors = [
+      'div[role="dialog"]',
+      'div.artdeco-modal',
+      'div.jobs-easy-apply-content',
+      'div.jobs-easy-apply-modal',
+      'div[data-test-modal]',
+      '.jobs-easy-apply-modal-content',
+      'div.artdeco-modal-overlay',
+      '.jobs-easy-apply-modal__content'
+    ];
+
+    let modal = await findVisibleElement(page, modalSelectors, 4000);
+
+    if (!modal && rawJobId) {
+      console.log(`🔄 Modal did not open on direct page. Retrying via search view URL: https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`);
+      try {
+        await page.goto(`https://www.linkedin.com/jobs/search/?currentJobId=${rawJobId}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await humanDelay(page, 1500, 3000);
+        easyApplyBtn = await findVisibleElement(page, easyApplySelectors, 6000);
+        if (easyApplyBtn) {
+          await easyApplyBtn.click({ force: true }).catch(() => null);
+          await humanDelay(page, 1500, 3000);
+          modal = await findVisibleElement(page, modalSelectors, 6000);
+        }
+      } catch {
+        // Soft catch
+      }
+    }
 
     if (!modal) {
       console.log(`⚠️ Easy Apply modal dialog did not open after click. Skipping.`);
@@ -322,7 +358,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
     // Multi-step modal loop (Max 6 steps)
     for (let step = 1; step <= 6; step++) {
-      const activeModal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-content').first();
+      const activeModal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-content, div.jobs-easy-apply-modal, div[data-test-modal], .jobs-easy-apply-modal-content, div.artdeco-modal-overlay').first();
 
       const nextBtn = page.locator('button:has-text("Next"), button:has-text("Review")').first();
       const submitBtn = page.locator('button:has-text("Submit application")').first();
@@ -575,9 +611,11 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         await humanDelay(page, 1500, 3000);
 
         // Error recovery check (if required fields blocked progress)
-        const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error').first();
+        const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error, .artdeco-inline-feedback__message, p[id*="error"]').first();
         if (await errorFeedback.isVisible().catch(() => false)) {
-          console.log(`⚠️ Form field validation warning detected. Resolving remaining inputs with profile data...`);
+          const errText = (await errorFeedback.textContent().catch(() => ''))?.trim() || 'Validation error';
+          console.log(`⚠️ Form field validation error detected: "${errText}". Re-solving with Gemini AI...`);
+
           const inputsToFix = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
           const empCount = await inputsToFix.count();
           for (let e = 0; e < empCount; e++) {
@@ -596,11 +634,11 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             labelText = labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
             const inputType = (await input.getAttribute('type').catch(() => '')) || '';
 
-            const isNumericField = inputType === 'number' || /notice|period|day|year|experience|ctc|salary|compensation|package/i.test(labelText);
-            const hasInvalidTextInNumericField = isNumericField && /\D/.test(val.trim());
+            const isNumericField = inputType === 'number' || /number|decimal|notice|period|day|year|experience|ctc|salary|compensation|package/i.test(labelText) || /decimal|number|digit|larger than/i.test(errText);
+            const hasInvalidTextInNumericField = isNumericField && (/\D/.test(val.trim()) || val.length > 5);
 
-            if (!val || val.trim() === '' || hasInvalidTextInNumericField) {
-              let cleanAnswer = await answerQuestionWithGemini(labelText, job.title);
+            if (!val || val.trim() === '' || hasInvalidTextInNumericField || errText) {
+              let cleanAnswer = await answerQuestionWithGemini(labelText, job.title, errText);
               cleanAnswer = sanitizeInputAnswer(labelText, cleanAnswer, inputType);
 
               const isLocationInput = labelText.toLowerCase().includes('location') ||
@@ -625,8 +663,17 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
               }
             }
           }
+
           await nextBtn.click().catch(() => null);
-          await humanDelay(page, 1200, 2500);
+          await humanDelay(page, 1500, 2500);
+
+          // Re-check if validation error is STILL blocking progress
+          if (await errorFeedback.isVisible().catch(() => false)) {
+            console.log(`\n🔔 🔊 [MANUAL INTERVENTION NEEDED] Validation error could not be auto-resolved. Playing audio alert beep...`);
+            triggerAudioAlert();
+            console.log(`⏳ Pausing 15 seconds for manual correction on active Chrome tab...`);
+            await page.waitForTimeout(15000);
+          }
         }
       } else {
         break;
