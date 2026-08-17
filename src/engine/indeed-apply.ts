@@ -72,6 +72,15 @@ function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: st
   let answer = (rawAnswer || '').trim();
   const lowerLabel = labelText.toLowerCase();
 
+  // 0. Date inputs (e.g. "Available Start Date", "Start date", input[type="date"])
+  if (inputType === 'date' || (/start date|available date|date/i.test(lowerLabel) && !/notice|period|ctc|salary|experience/i.test(lowerLabel))) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   // 1. Notice period / Lead time / joining days
   if (/notice|lead time|join|days|joining/i.test(lowerLabel) && !/salary|ctc|compensation/i.test(lowerLabel)) {
     return (profile.noticePeriodDays || 1).toString();
