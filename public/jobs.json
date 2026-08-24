@@ -1,5 +1,213 @@
 [
   {
+    "id": 2462,
+    "platform": "indeed",
+    "external_job_id": "indeed_b6d5e33b199e4df4",
+    "title": "Senior Software Engineer",
+    "company": "CIRRIL-CREDITECH INFORMATION PRIVATE LIMITED",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=b6d5e33b199e4df4",
+    "jd_text": "Indeed Easily Apply Job: Senior Software Engineer at CIRRIL-CREDITECH INFORMATION PRIVATE LIMITED",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:20",
+    "applied_at": null
+  },
+  {
+    "id": 2459,
+    "platform": "indeed",
+    "external_job_id": "indeed_9025b2c892a699b1",
+    "title": "Lead Full Stack Developer (WFH)",
+    "company": "Outsource Bigdata",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=9025b2c892a699b1",
+    "jd_text": "Indeed Easily Apply Job: Lead Full Stack Developer (WFH) at Outsource Bigdata",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:20",
+    "applied_at": null
+  },
+  {
+    "id": 2456,
+    "platform": "indeed",
+    "external_job_id": "indeed_b811fc40c75b1fdb",
+    "title": "Full Stack Developer",
+    "company": "Techwondoe",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=b811fc40c75b1fdb",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Techwondoe",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:20",
+    "applied_at": null
+  },
+  {
+    "id": 2453,
+    "platform": "indeed",
+    "external_job_id": "indeed_cdef0123456789ab",
+    "title": "Full Stack Developer",
+    "company": "INSTAACODERS TECHNOLOGIES",
+    "location": "Remote in Noida, Uttar Pradesh",
+    "url": "https://in.indeed.com/viewjob?jk=cdef0123456789ab",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at INSTAACODERS TECHNOLOGIES",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:19",
+    "applied_at": null
+  },
+  {
+    "id": 2447,
+    "platform": "indeed",
+    "external_job_id": "indeed_13856bc89123b432",
+    "title": "Full Stack Developer",
+    "company": "Sky International",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=13856bc89123b432",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Sky International",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:19",
+    "applied_at": null
+  },
+  {
+    "id": 2432,
+    "platform": "indeed",
+    "external_job_id": "indeed_2f69266f45bb248d",
+    "title": "Senior Front End Developer",
+    "company": "Millipixels Interactive LLP",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=2f69266f45bb248d",
+    "jd_text": "Indeed Easily Apply Job: Senior Front End Developer at Millipixels Interactive LLP",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:18",
+    "applied_at": null
+  },
+  {
+    "id": 2429,
+    "platform": "indeed",
+    "external_job_id": "indeed_21f977fcc954669b",
+    "title": "Front End Developer",
+    "company": "Cimpress",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=21f977fcc954669b",
+    "jd_text": "Indeed Easily Apply Job: Front End Developer at Cimpress",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:18",
+    "applied_at": null
+  },
+  {
+    "id": 2414,
+    "platform": "indeed",
+    "external_job_id": "indeed_a810fffb3fbe991d",
+    "title": "Full Stack Developer",
+    "company": "Aho Security Labs",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=a810fffb3fbe991d",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Aho Security Labs",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:12",
+    "applied_at": null
+  },
+  {
+    "id": 2408,
+    "platform": "indeed",
+    "external_job_id": "indeed_45078bb117d951fa",
+    "title": "Full Stack Developers – MEAN Stack",
+    "company": "OdiTek Solutions",
+    "location": "Remote in Odisha",
+    "url": "https://in.indeed.com/viewjob?jk=45078bb117d951fa",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developers – MEAN Stack at OdiTek Solutions",
+    "apply_type": "easy-apply",
+    "score": 2.6,
+    "evaluation_reason": "Matched: mean stack, full stack",
+    "status": "skipped",
+    "scanned_at": "2026-08-24 13:31:12",
+    "applied_at": "2026-08-24 13:40:08"
+  },
+  {
+    "id": 2402,
+    "platform": "indeed",
+    "external_job_id": "indeed_5295d4ee573a8ce3",
+    "title": "Full-Time Senior Software Engineer -Remote",
+    "company": "Travmonde",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=5295d4ee573a8ce3",
+    "jd_text": "Indeed Easily Apply Job: Full-Time Senior Software Engineer -Remote at Travmonde",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:11",
+    "applied_at": null
+  },
+  {
+    "id": 2396,
+    "platform": "indeed",
+    "external_job_id": "indeed_3437290ca3ba3339",
+    "title": "Web Developer",
+    "company": "Aura - The A.I Lab",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=3437290ca3ba3339",
+    "jd_text": "Indeed Easily Apply Job: Web Developer at Aura - The A.I Lab",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: web developer",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:11",
+    "applied_at": null
+  },
+  {
+    "id": 2369,
+    "platform": "indeed",
+    "external_job_id": "indeed_7c36d31750c7e331",
+    "title": "Senior Frontend Developer",
+    "company": "Whiskey Library",
+    "location": "Remote in Mumbai, Maharashtra",
+    "url": "https://in.indeed.com/viewjob?jk=7c36d31750c7e331",
+    "jd_text": "Indeed Easily Apply Job: Senior Frontend Developer at Whiskey Library",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: frontend",
+    "status": "evaluated",
+    "scanned_at": "2026-08-24 13:31:04",
+    "applied_at": null
+  },
+  {
+    "id": 2360,
+    "platform": "indeed",
+    "external_job_id": "indeed_c3d59d9d29dd3370",
+    "title": "Angular Developer",
+    "company": "Citta Solutions",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=c3d59d9d29dd3370",
+    "jd_text": "Indeed Easily Apply Job: Angular Developer at Citta Solutions",
+    "apply_type": "easy-apply",
+    "score": 2.8,
+    "evaluation_reason": "Matched: angular",
+    "status": "skipped",
+    "scanned_at": "2026-08-24 13:31:04",
+    "applied_at": "2026-08-24 13:37:08"
+  },
+  {
     "id": 2326,
     "platform": "linkedin",
     "external_job_id": "linkedin_4455839981",
@@ -1275,9 +1483,9 @@
     "apply_type": "easy-apply",
     "score": 2.6,
     "evaluation_reason": "Matched: frontend, web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:24",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:39:45"
   },
   {
     "id": 2229,
@@ -1307,9 +1515,9 @@
     "apply_type": "easy-apply",
     "score": 2.6,
     "evaluation_reason": "Matched: web developer, full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:24",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:39:21"
   },
   {
     "id": 2223,
@@ -1547,9 +1755,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:16",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:36:24"
   },
   {
     "id": 2178,
@@ -1643,9 +1851,9 @@
     "apply_type": "easy-apply",
     "score": 2.6,
     "evaluation_reason": "Matched: frontend, web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:15",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:38:18"
   },
   {
     "id": 2160,
@@ -1755,9 +1963,9 @@
     "apply_type": "easy-apply",
     "score": 2.6,
     "evaluation_reason": "Matched: mean stack, full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:08",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:37:59"
   },
   {
     "id": 2139,
@@ -1907,14 +2115,14 @@
     "id": 2112,
     "platform": "indeed",
     "external_job_id": "indeed_789abcdef0123456",
-    "title": "Senior Angular Front-End Developer",
-    "company": "MNJ Software",
+    "title": "Front-End Javascript Developer",
+    "company": "Vanilla Networks",
     "location": "Remote",
     "url": "https://in.indeed.com/viewjob?jk=789abcdef0123456",
-    "jd_text": "Indeed Easily Apply Job: Senior Angular Front-End Developer at MNJ Software",
+    "jd_text": "Indeed Easily Apply Job: Front-End Javascript Developer at Vanilla Networks",
     "apply_type": "easy-apply",
-    "score": 2.8,
-    "evaluation_reason": "Matched: angular",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
     "status": "evaluated",
     "scanned_at": "2026-08-17 14:18:07",
     "applied_at": null
@@ -1931,9 +2139,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:07",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:36:02"
   },
   {
     "id": 2103,
@@ -1947,9 +2155,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:00",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:35:26"
   },
   {
     "id": 2100,
@@ -1963,9 +2171,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:00",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:34:44"
   },
   {
     "id": 2097,
@@ -1995,9 +2203,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:17:59",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:34:21"
   },
   {
     "id": 2085,
@@ -2011,9 +2219,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:17:59",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:34:01"
   },
   {
     "id": 2061,
@@ -2027,9 +2235,9 @@
     "apply_type": "easy-apply",
     "score": 4.3999999999999995,
     "evaluation_reason": "Matched: angular, typescript, frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 14:17:58",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:31:57"
   },
   {
     "id": 2055,
@@ -2059,9 +2267,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:33:37"
   },
   {
     "id": 2049,
@@ -2115,17 +2323,17 @@
     "id": 2040,
     "platform": "indeed",
     "external_job_id": "indeed_0f1e2d3c4b5a6978",
-    "title": "Senior / Lead Engineer (Full Stack)",
-    "company": "CogniCor",
-    "location": "Remote in Kochi, Kerala",
+    "title": "Associate Principal Engineer, Frontend Angular2x",
+    "company": "Nagarro",
+    "location": "Remote",
     "url": "https://in.indeed.com/viewjob?jk=0f1e2d3c4b5a6978",
-    "jd_text": "Indeed Easily Apply Job: Senior / Lead Engineer (Full Stack) at CogniCor",
+    "jd_text": "Indeed Easily Apply Job: Associate Principal Engineer, Frontend Angular2x at Nagarro",
     "apply_type": "easy-apply",
-    "score": 1.8,
-    "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "score": 3.5999999999999996,
+    "evaluation_reason": "Matched: angular, frontend",
+    "status": "skipped",
     "scanned_at": "2026-08-17 13:51:37",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:32:59"
   },
   {
     "id": 2037,
@@ -2235,9 +2443,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:32:33"
   },
   {
     "id": 2016,
@@ -2251,9 +2459,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:32:22"
   },
   {
     "id": 2013,
@@ -2267,9 +2475,9 @@
     "apply_type": "easy-apply",
     "score": 3.5999999999999996,
     "evaluation_reason": "Matched: angular, frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 13:51:35",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:32:08"
   },
   {
     "id": 2010,
@@ -2283,9 +2491,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 13:51:35",
-    "applied_at": null
+    "applied_at": "2026-08-24 13:33:17"
   },
   {
     "id": 1845,
