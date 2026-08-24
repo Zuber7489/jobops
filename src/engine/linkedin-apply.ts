@@ -59,6 +59,45 @@ async function simulateScroll(page: Page) {
   }
 }
 
+/** Dismiss LinkedIn 'Save this application?' dialog if left open */
+async function dismissDiscardModalIfPresent(page: Page) {
+  try {
+    const discardBtn = page.locator('button[data-test-dialog-secondary-action], button:has-text("Discard"), button[data-control-name="discard_application_confirm_btn"]').first();
+    if (await discardBtn.isVisible().catch(() => false)) {
+      console.log(`🧹 Dismissing 'Save this application' dialog with Discard...`);
+      await discardBtn.click({ force: true }).catch(() => null);
+      await page.waitForTimeout(400);
+    }
+  } catch {
+    // soft catch
+  }
+}
+
+/** Scroll an element into view within the modal only, without scrolling the main window */
+async function scrollIntoModalView(el: any) {
+  try {
+    await el.evaluate((node: HTMLElement) => {
+      node.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    }).catch(() => null);
+  } catch {
+    // soft catch
+  }
+}
+
+/** Scroll the internal content area of the modal dialog so inner fields and buttons are reachable */
+async function scrollModal(modal: any) {
+  try {
+    await modal.evaluate((el: HTMLElement) => {
+      const scrollable = (el.querySelector('.jobs-easy-apply-modal__content, .artdeco-modal__content, .jobs-easy-apply-content, div[class*="content"]') || el) as HTMLElement;
+      if (scrollable) {
+        scrollable.scrollTop = scrollable.scrollHeight;
+      }
+    }).catch(() => null);
+  } catch {
+    // soft catch
+  }
+}
+
 // ── Visibility helper ─────────────────────────────────────────────────────────
 
 async function findVisibleElement(page: Page, selectors: string[], timeoutMs: number = 8000) {
@@ -114,9 +153,10 @@ async function tryUploadResume(page: Page, modal: any, profile: ReturnType<typeo
       // 1. Explicit resumeUploadPath from profile.yml (highest priority)
       profile.resumeUploadPath ? path.resolve(profile.resumeUploadPath) : '',
       // 2. Standard names in project root
+      path.join(resumeDir, 'Mohammad_Zuber_Resume_Newest.pdf'),
+      path.join(resumeDir, 'Mohammad_Zuber_Resume.pdf'),
       path.join(resumeDir, 'resume.pdf'),
       path.join(resumeDir, 'cv.pdf'),
-      path.join(resumeDir, 'Mohammad_Zuber_Resume.pdf'),
     ].filter(Boolean);
 
     const pdfPath = candidatePdfPaths.find(p => fs.existsSync(p));
@@ -134,6 +174,180 @@ async function tryUploadResume(page: Page, modal: any, profile: ReturnType<typeo
     }
   } catch {
     // soft catch
+  }
+}
+
+// ── Radio Question Resolution ────────────────────────────────────────────────
+
+async function resolveRadioQuestions(page: Page, modal: any, job: JobRecord, profile: ReturnType<typeof loadProfile>) {
+  try {
+    // 1. Locate all radio inputs inside modal (or active page as fallback)
+    let radios = modal.locator('input[type="radio"]');
+    let totalRadios = await radios.count();
+    if (totalRadios === 0) {
+      radios = page.locator('div[role="dialog"] input[type="radio"], .jobs-easy-apply-content input[type="radio"], .artdeco-modal input[type="radio"]');
+      totalRadios = await radios.count();
+    }
+
+    if (totalRadios === 0) return;
+
+    // 2. Group radios by 'name' attribute
+    const groupsByName: Record<string, any[]> = {};
+    for (let r = 0; r < totalRadios; r++) {
+      const radio = radios.nth(r);
+      const name = (await radio.getAttribute('name').catch(() => '')) || `unnamed_group_${r}`;
+      if (!groupsByName[name]) {
+        groupsByName[name] = [];
+      }
+      groupsByName[name].push(radio);
+    }
+
+    // 3. Process each radio group
+    for (const [groupName, groupRadios] of Object.entries(groupsByName)) {
+      // Check if any radio in this group is already checked
+      let alreadyChecked = false;
+      for (const radio of groupRadios) {
+        if (await radio.isChecked().catch(() => false)) {
+          alreadyChecked = true;
+          break;
+        }
+      }
+      if (alreadyChecked) continue;
+
+      const firstRadio = groupRadios[0];
+
+      // Extract Question Text from parent fieldset or container
+      let qText = '';
+      try {
+        const parentContainer = firstRadio.locator('xpath=ancestor::fieldset | ancestor::div[contains(@class, "fb-") or contains(@class, "form") or contains(@class, "group")]').first();
+        if (await parentContainer.count() > 0) {
+          qText = (await parentContainer.locator('legend, label, span.t-bold, span[aria-hidden="true"]').first().textContent().catch(() => '')) || '';
+        }
+      } catch {
+        // fallback
+      }
+      qText = qText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+
+      // Extract Option Labels for each radio
+      const optLabels: string[] = [];
+      for (const radio of groupRadios) {
+        const radioId = await radio.getAttribute('id').catch(() => '');
+        let labelText = '';
+        if (radioId) {
+          labelText = (await modal.locator(`label[for="${radioId}"]`).first().textContent().catch(() => '')) || '';
+          if (!labelText) {
+            labelText = (await page.locator(`label[for="${radioId}"]`).first().textContent().catch(() => '')) || '';
+          }
+        }
+        if (!labelText) {
+          const parent = radio.locator('xpath=ancestor::div[contains(@class, "fb-radio") or @data-test-text-selectable-option or contains(@class, "radio")] | ancestor::label | following-sibling::label').first();
+          labelText = (await parent.textContent().catch(() => '')) || '';
+        }
+        if (!labelText) {
+          labelText = (await radio.getAttribute('value').catch(() => '')) || '';
+        }
+        optLabels.push(labelText.replace(/\s+/g, ' ').trim());
+      }
+
+      console.log(`❓ Radio Question: "${qText || groupName}" [${optLabels.join(' | ')}]`);
+
+      let aiChoice = '';
+      const validOpts = optLabels.filter(t => t.length > 0);
+      if (validOpts.length > 0) {
+        const prompt = `Question: "${qText}". Pick the single best option from this list: [${validOpts.join(' | ')}]. Candidate Profile: Total Experience: ${profile.totalYoe || 2.5} years, Relevant Experience: ${profile.relevantYoe || 2.5} years, Notice Period: ${profile.noticePeriodDays || 1} day, Current CTC: ${profile.currentCtcLpa || 3.2} LPA, Expected CTC: ${profile.expectedCtcLpa || 6.5} LPA, Skills: ${(profile.skills || []).join(', ')}. Return ONLY the exact text or matching phrase of the best option.`;
+        aiChoice = await answerQuestionWithGemini(prompt, job.title);
+        aiChoice = aiChoice.trim().replace(/^["']|["']$/g, '');
+        console.log(`💡 AI Radio Choice: "${aiChoice}"`);
+      }
+
+      // Match target index
+      let targetIndex = -1;
+      if (aiChoice) {
+        for (let r = 0; r < optLabels.length; r++) {
+          if (optLabels[r].toLowerCase().includes(aiChoice.toLowerCase()) || aiChoice.toLowerCase().includes(optLabels[r].toLowerCase())) {
+            targetIndex = r;
+            break;
+          }
+        }
+        if (targetIndex === -1) {
+          const words = aiChoice.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+          for (let r = 0; r < optLabels.length; r++) {
+            if (words.some(w => optLabels[r].toLowerCase().includes(w))) {
+              targetIndex = r;
+              break;
+            }
+          }
+        }
+      }
+
+      if (targetIndex === -1) {
+        for (let r = 0; r < optLabels.length; r++) {
+          const txt = optLabels[r].toLowerCase();
+          if (/3[–-]5|2[–-]3|less than 3|practical|extensive|yes|authorized|hybrid|remote|immediate/i.test(txt)) {
+            targetIndex = r;
+            break;
+          }
+        }
+      }
+
+      if (targetIndex === -1) {
+        targetIndex = 0;
+      }
+
+      const targetRadio = groupRadios[targetIndex];
+      const targetId = await targetRadio.getAttribute('id').catch(() => '');
+
+      await scrollIntoModalView(targetRadio);
+
+      let isSelected = false;
+
+      // Method 1: Click label[for]
+      if (targetId) {
+        const lbl = modal.locator(`label[for="${targetId}"]`).first();
+        if (await lbl.count() > 0) {
+          await scrollIntoModalView(lbl);
+          await lbl.click({ force: true }).catch(() => null);
+          await page.waitForTimeout(200);
+          isSelected = await targetRadio.isChecked().catch(() => false);
+        }
+      }
+
+      // Method 2: Click target radio directly with force
+      if (!isSelected) {
+        await targetRadio.click({ force: true }).catch(() => null);
+        await page.waitForTimeout(200);
+        isSelected = await targetRadio.isChecked().catch(() => false);
+      }
+
+      // Method 3: Click parent container or wrapper
+      if (!isSelected) {
+        const wrapper = targetRadio.locator('xpath=ancestor::div[contains(@class, "fb-radio") or @data-test-text-selectable-option or contains(@class, "radio")] | ancestor::label').first();
+        if (await wrapper.count() > 0) {
+          await wrapper.click({ force: true }).catch(() => null);
+          await page.waitForTimeout(200);
+          isSelected = await targetRadio.isChecked().catch(() => false);
+        }
+      }
+
+      // Method 4: JavaScript dispatch click & check
+      if (!isSelected) {
+        await targetRadio.evaluate((el: HTMLInputElement) => {
+          el.checked = true;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }).catch(() => null);
+        if (targetId) {
+          await page.evaluate((id: string) => {
+            const label = document.querySelector(`label[for="${id}"]`) as HTMLElement;
+            if (label) label.click();
+          }, targetId).catch(() => null);
+        }
+        await page.waitForTimeout(200);
+      }
+    }
+  } catch (err: any) {
+    console.log(`⚠️ Radio resolution error: ${err.message}`);
   }
 }
 
@@ -191,6 +405,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
   let browserContext: BrowserContext | null = null;
   let page: Page | null = null;
+  let isCdp = false;
 
   try {
     // Connect to existing logged-in Chrome session via CDP
@@ -198,7 +413,8 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       console.log(`🔌 Connecting to active Chrome session on CDP port ${CONFIG.cdpPort}...`);
       const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
       browserContext = browser.contexts()[0] || await browser.newContext();
-      page = await browserContext.newPage();
+      page = browserContext.pages()[0] || await browserContext.newPage();
+      isCdp = true;
       console.log(`✅ Connected to active Chrome session!`);
       await page.bringToFront().catch(() => null);
     } catch (cdpErr) {
@@ -246,8 +462,10 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
     // 🕐 Human-like random read pause after page load
     await simulateMouseMovement(page);
-    await simulateScroll(page);
-    await humanDelay(page, 2000, 4500);
+    await humanDelay(page, 1500, 3000);
+
+    // Dismiss any leftover 'Save this application?' dialog
+    await dismissDiscardModalIfPresent(page);
 
     // Check auth status
     const loginBtn = await findVisibleElement(page, ['a.nav__button-secondary:has-text("Sign in")', 'button:has-text("Sign in")', 'a[href*="login"]'], 1500);
@@ -310,8 +528,13 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       await easyApplyBtn.click({ force: true }).catch(() => null);
     }
 
-    // Human read pause after modal opens
-    await humanDelay(page, 1500, 3000);
+    // Human read pause after modal opens & lock background scroll
+    await humanDelay(page, 1200, 2500);
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }).catch(() => null);
 
     // Check daily limit toast/banner after click
     const clickLimitText = page.locator('*:has-text("daily application limit"), *:has-text("reached your daily"), *:has-text("reached today"), *:has-text("limit for today")').first();
@@ -358,10 +581,13 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
     // Multi-step modal loop (Max 6 steps)
     for (let step = 1; step <= 6; step++) {
-      const activeModal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-content, div.jobs-easy-apply-modal, div[data-test-modal], .jobs-easy-apply-modal-content, div.artdeco-modal-overlay').first();
+      const activeModal = page.locator('div[role="dialog"], div.artdeco-modal, div.jobs-easy-apply-modal, div.jobs-easy-apply-content, .jobs-easy-apply-modal-content, div.artdeco-modal-overlay').first();
 
-      const nextBtn = page.locator('button:has-text("Next"), button:has-text("Review")').first();
-      const submitBtn = page.locator('button:has-text("Submit application")').first();
+      // Ensure modal internal container is scrolled to reveal elements
+      await scrollModal(activeModal);
+
+      const nextBtn = activeModal.locator('button[aria-label*="Continue to next step" i], button[aria-label*="Review your application" i], button[aria-label*="next" i], button[aria-label*="Review" i], button:has-text("Next"), button:has-text("Review")').first();
+      const submitBtn = activeModal.locator('button[aria-label*="Submit application" i], button:has-text("Submit application")').first();
 
       // Step A: Fill ALL text, numeric, and textarea inputs inside modal with real keypresses
       try {
@@ -370,6 +596,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
 
         for (let j = 0; j < inputCount; j++) {
           const input = textInputs.nth(j);
+          await scrollIntoModalView(input);
           const currentVal = await input.inputValue().catch(() => '');
 
           if (!currentVal || currentVal.trim() === '') {
@@ -390,13 +617,27 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
             // Clean label text
             labelText = labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
 
-            console.log(`❓ Question: "${labelText}"`);
-            let aiAnswer = await answerQuestionWithGemini(labelText, job.title);
-
+            let aiAnswer = '';
+            const inputId = ((await input.getAttribute('id').catch(() => '')) || '').toLowerCase();
+            const inputName = ((await input.getAttribute('name').catch(() => '')) || '').toLowerCase();
             const inputType = (await input.getAttribute('type').catch(() => '')) || '';
-            aiAnswer = sanitizeInputAnswer(labelText, aiAnswer, inputType);
 
-            console.log(`💡 Answer: "${aiAnswer}"`);
+            // Check standard candidate profile fields directly
+            if (/first\s*name/i.test(labelText) || inputId.includes('firstname') || inputName.includes('firstname')) {
+              aiAnswer = (profile.name || '').split(' ')[0] || 'Mohammad';
+            } else if (/last\s*name/i.test(labelText) || inputId.includes('lastname') || inputName.includes('lastname')) {
+              aiAnswer = (profile.name || '').split(' ').slice(1).join(' ') || 'Zuber';
+            } else if (/email/i.test(labelText) || inputType === 'email' || inputId.includes('email')) {
+              aiAnswer = profile.email || 'zuber.shaikh.7415@gmail.com';
+            } else if (/phone|mobile|contact/i.test(labelText) || inputType === 'tel' || inputId.includes('phone') || inputName.includes('phone')) {
+              const digits = (profile.phone || '').replace(/[^\d]/g, '');
+              aiAnswer = digits.length > 10 ? digits.slice(-10) : digits || '7489898481';
+            } else {
+              console.log(`❓ Question: "${labelText}"`);
+              const rawAnswer = await answerQuestionWithGemini(labelText, job.title);
+              aiAnswer = sanitizeInputAnswer(labelText, rawAnswer, inputType);
+              console.log(`💡 Answer: "${aiAnswer}"`);
+            }
 
             const isLocationInput = labelText.toLowerCase().includes('location') ||
                                     labelText.toLowerCase().includes('city') ||
@@ -497,33 +738,8 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
         // Soft catch
       }
 
-      // Step D: Resolve Radio Questions with smart fallbacks
-      try {
-        const fieldsets = activeModal.locator('fieldset, div.fb-radio, div.fb-form-element, div[role="radiogroup"]');
-        const fsCount = await fieldsets.count();
-
-        for (let f = 0; f < fsCount; f++) {
-          const fs = fieldsets.nth(f);
-
-          const checkedRadio = fs.locator('input[type="radio"]:checked');
-          if (await checkedRadio.count() > 0) continue;
-
-          const yesOption = fs.locator('label:has-text("Yes"), input[value="Yes"], span:has-text("Yes")').first();
-
-          if (await yesOption.isVisible().catch(() => false)) {
-            await yesOption.click().catch(() => null);
-            await page.waitForTimeout(300);
-          } else {
-            const firstRadioLabel = fs.locator('label, input[type="radio"]').first();
-            if (await firstRadioLabel.isVisible().catch(() => false)) {
-              await firstRadioLabel.click().catch(() => null);
-              await page.waitForTimeout(300);
-            }
-          }
-        }
-      } catch (radioErr) {
-        // Soft catch
-      }
+      // Step D: Resolve Radio Questions with smart Gemini AI matching & profile context
+      await resolveRadioQuestions(page, activeModal, job, profile);
 
       // Step E: Final Submit Step Check
       if (await submitBtn.isVisible().catch(() => false)) {
@@ -595,27 +811,49 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
       }
 
       // Step G: Proceed to next step
-      if (await nextBtn.isVisible().catch(() => false)) {
-        console.log(`➡️ Step ${step}: Proceeding to next step...`);
-
-        // Fill phone if present and empty
-        const phoneInput = modal.locator('input[id*="phoneNumber"], input[name*="phone"]').first();
-        if (await phoneInput.isVisible().catch(() => false)) {
-          const currentVal = await phoneInput.inputValue();
-          if (!currentVal) await phoneInput.fill(profile.phone);
+      // Fill phone if present and empty
+      const phoneInputs = activeModal.locator('input[id*="phoneNumber"], input[name*="phone"], input[id*="phone"], input[type="tel"]');
+      const pCount = await phoneInputs.count();
+      for (let p = 0; p < pCount; p++) {
+        const pInput = phoneInputs.nth(p);
+        await scrollIntoModalView(pInput);
+        const currentVal = await pInput.inputValue().catch(() => '');
+        if (!currentVal || currentVal.trim() === '') {
+          console.log(`📱 Filling required phone number: ${profile.phone}`);
+          await pInput.focus().catch(() => null);
+          await pInput.fill(profile.phone).catch(() => null);
+          await pInput.dispatchEvent('input').catch(() => null);
+          await pInput.dispatchEvent('change').catch(() => null);
+          await pInput.dispatchEvent('blur').catch(() => null);
         }
+      }
 
-        // Human pre-click pause
+      await scrollModal(activeModal);
+      await humanDelay(page, 300, 600);
+
+      const currentNextBtn = activeModal.locator('button[aria-label*="Continue to next step" i], button[aria-label*="Review your application" i], button[aria-label*="next" i], button[aria-label*="Review" i], button:has-text("Next"), button:has-text("Review")').first();
+
+      if (await currentNextBtn.count() > 0) {
+        console.log(`➡️ Step ${step}: Proceeding to next step...`);
         await humanDelay(page, 500, 1200);
-        await nextBtn.click();
+        await scrollIntoModalView(currentNextBtn);
+        try {
+          await currentNextBtn.click();
+        } catch {
+          await currentNextBtn.click({ force: true }).catch(() => null);
+        }
         await humanDelay(page, 1500, 3000);
 
         // Error recovery check (if required fields blocked progress)
-        const errorFeedback = modal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error, .artdeco-inline-feedback__message, p[id*="error"]').first();
+        const errorFeedback = activeModal.locator('span.fb-dash-form-element__error-msg, div.artdeco-inline-feedback--error, .artdeco-inline-feedback__message, p[id*="error"]').first();
         if (await errorFeedback.isVisible().catch(() => false)) {
           const errText = (await errorFeedback.textContent().catch(() => ''))?.trim() || 'Validation error';
           console.log(`⚠️ Form field validation error detected: "${errText}". Re-solving with Gemini AI...`);
 
+          // 1. Re-resolve radio questions if missed
+          await resolveRadioQuestions(page, modal, job, profile);
+
+          // 2. Re-resolve text inputs
           const inputsToFix = modal.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea');
           const empCount = await inputsToFix.count();
           for (let e = 0; e < empCount; e++) {
@@ -701,7 +939,7 @@ export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = {
     updateJobStatus(job.external_job_id, 'failed');
     return 'failed';
   } finally {
-    if (page) {
+    if (page && !isCdp) {
       await page.close().catch(() => null);
     }
   }
