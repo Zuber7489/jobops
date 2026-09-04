@@ -1,5 +1,501 @@
 [
   {
+    "id": 2630,
+    "platform": "indeed",
+    "external_job_id": "indeed_4688dc8f20d5b683",
+    "title": "Full Stack Javascript & Database Developer",
+    "company": "Particle41",
+    "location": "Remote in Pune, Maharashtra",
+    "url": "https://in.indeed.com/viewjob?jk=4688dc8f20d5b683",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Javascript & Database Developer at Particle41",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:36",
+    "applied_at": null
+  },
+  {
+    "id": 2621,
+    "platform": "indeed",
+    "external_job_id": "indeed_4b2797c2cca048bd",
+    "title": "Senior Frontend Engineer",
+    "company": "Expertshub.ai",
+    "location": "Remote in Bangalore City, Bengaluru, Karnataka",
+    "url": "https://in.indeed.com/viewjob?jk=4b2797c2cca048bd",
+    "jd_text": "Indeed Easily Apply Job: Senior Frontend Engineer at Expertshub.ai",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: frontend",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:35",
+    "applied_at": null
+  },
+  {
+    "id": 2615,
+    "platform": "indeed",
+    "external_job_id": "indeed_294f2dc5a406e7eb",
+    "title": "Full Stack Developer",
+    "company": "Jurisnexa Global Legal & Associoates",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=294f2dc5a406e7eb",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Jurisnexa Global Legal & Associoates",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:35",
+    "applied_at": null
+  },
+  {
+    "id": 2582,
+    "platform": "indeed",
+    "external_job_id": "indeed_1c81d1b5744e742f",
+    "title": "Senior UI Developer",
+    "company": "Shreem Talent Bridge",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=1c81d1b5744e742f",
+    "jd_text": "Indeed Easily Apply Job: Senior UI Developer at Shreem Talent Bridge",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: ui developer",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:28",
+    "applied_at": null
+  },
+  {
+    "id": 2561,
+    "platform": "indeed",
+    "external_job_id": "indeed_6507dcf9d2462c88",
+    "title": "Senior Front End Developer",
+    "company": "Technology Next",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=6507dcf9d2462c88",
+    "jd_text": "Indeed Easily Apply Job: Senior Front End Developer at Technology Next",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:26",
+    "applied_at": null
+  },
+  {
+    "id": 2534,
+    "platform": "indeed",
+    "external_job_id": "indeed_15c903f05d18895f",
+    "title": "Full Stack Developer",
+    "company": "Anancion",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=15c903f05d18895f",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Anancion",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:19",
+    "applied_at": null
+  },
+  {
+    "id": 2528,
+    "platform": "indeed",
+    "external_job_id": "indeed_9525d651ef3a8bbc",
+    "title": "Odoo Full Stack Developer (Remote)",
+    "company": "myEZcare",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=9525d651ef3a8bbc",
+    "jd_text": "Indeed Easily Apply Job: Odoo Full Stack Developer (Remote) at myEZcare",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:19",
+    "applied_at": null
+  },
+  {
+    "id": 2513,
+    "platform": "indeed",
+    "external_job_id": "indeed_0ac51fa5c1bbe80c",
+    "title": "Full Stack Developer (Angular + Java)",
+    "company": "Correa Masonry llc.",
+    "location": "Remote",
+    "url": "https://in.indeed.com/viewjob?jk=0ac51fa5c1bbe80c",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer (Angular + Java) at Correa Masonry llc.",
+    "apply_type": "easy-apply",
+    "score": 1.5999999999999996,
+    "evaluation_reason": "Matched: angular, full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:18",
+    "applied_at": null
+  },
+  {
+    "id": 2507,
+    "platform": "indeed",
+    "external_job_id": "indeed_07ce6d8e4c6ea393",
+    "title": "Senior Full-Stack .NET Consultant (Angular)",
+    "company": "TechBiz Global GmbH",
+    "location": "Remote in Delhi, Delhi",
+    "url": "https://in.indeed.com/viewjob?jk=07ce6d8e4c6ea393",
+    "jd_text": "Indeed Easily Apply Job: Senior Full-Stack .NET Consultant (Angular) at TechBiz Global GmbH",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Matched: angular",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:33:18",
+    "applied_at": null
+  },
+  {
+    "id": 2492,
+    "platform": "indeed",
+    "external_job_id": "indeed_ec8953c16d6c5620",
+    "title": "Senior Angular Developer (m/f/d) - 100% Remote",
+    "company": "European Technology Chamber",
+    "location": "Remote in India",
+    "url": "https://in.indeed.com/viewjob?jk=ec8953c16d6c5620",
+    "jd_text": "Indeed Easily Apply Job: Senior Angular Developer (m/f/d) - 100% Remote at European Technology Chamber",
+    "apply_type": "easy-apply",
+    "score": 2.8,
+    "evaluation_reason": "Matched: angular",
+    "status": "skipped",
+    "scanned_at": "2026-09-03 11:33:14",
+    "applied_at": "2026-09-03 11:36:22"
+  },
+  {
+    "id": 2491,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462807714",
+    "title": "Senior Programmer III",
+    "company": "Quanticate",
+    "location": "Bengaluru, Karnataka, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4462807714/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=snMhQhqxLtfO%2FEE%2FARlMrA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Senior Programmer III at Quanticate",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:58",
+    "applied_at": null
+  },
+  {
+    "id": 2490,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462772114",
+    "title": "CDH Architect / Analyst",
+    "company": "BlueRose Technologies",
+    "location": "Bengaluru, Karnataka, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4462772114/?eBP=CwEAAAGgZvaj5qn4zM0425zb8oKnXiqtCeZn_98ID4fh2uR9x37ADPeVL9B-OaFW-LM6TN3SBmzzY02vj2haOFo_mtRBI15ydeZG0qlunCHLK-ogjh_2GuumRwOtyQCeVObOOjkTjBrCxZY5sMgfITwFKLhBV4KZci1git1WKlUNN21pawee3SUYFyXq2fvUNb9SUZdyuC6wisCTABpyKTejhG9LemSrth_qCH72M8BPZGnLR_ArNNwMJoiBPO7x4dxLgRld5x_q8R5sGVyECBbnJnhe3rfe3-o-__25hW6Tj73WQ72kgcSRAJFt6FM6pZut1bjoFSAqIQQZ4Af9rAiyz0LqsqhACV9AhP_tHZziaK49jOHqofOLUXBH14qQ69rXXQ-miMkfUKG4BIOjUtwoEHJWTVbiJjf5Mx3NRKC87UOez8XxDgLumPbuHlxcekZmvyrGjPqKlJHU32RVPsPyZHsz5ydIdbDwOPKfFK0HFYSVAMT593B3POe_&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=mj1AjnFexS%2BBPKnWQWiCtQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: CDH Architect / Analyst at BlueRose Technologies",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:57",
+    "applied_at": null
+  },
+  {
+    "id": 2489,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462188953",
+    "title": "Software Engineer : ServiceNow Developer",
+    "company": "GC Technologies Pvt Ltd",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4462188953/?eBP=CwEAAAGgZvaj5sBMzqKnAt8E4T9sywg8faJC1oPYao1Djqal6XSn9LS6CpuhnmsOQuw0Et-JngQBQ5qmxv70ttlmjCKCT80zPJtOxS1z_vdU6wEwi-YZJNKUOTwWmViym3gEATnnMEm77RBUIS74_IiGWxXi0Jkh7Ss5OJF-cAXc6LDt8fWZ67PzSYyHjorQksshVwDWhcCiss4HLcWrLndKmeb4OYniRwUu02VBvyvv9ye63W_RXQcgvbVTffTRS4yUu2hrlRMXKxme8c6P0o1vma1KqkQQSe5T5DmdiT2iMiBeRzBbpP42esyyywM6bpjwiPc8b5REZbUY1iZ1w3S8_xk6iQ2N96mjPGqMCY-RCQb-HEfu57gyMQ1VXmrHWTHrJQIT50xCvgeC9IAvMJaLodfmriMN2sM-zziHt6ZwWiZ_bnTwJm8685wVmMOytyXslcL4UiI3zANojMHlrIBIzvKson53e-my7a_HWC6bhcC-DWU5Yv6tMasl1rB_KZupVfAtY5igLg&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=o2GqHgzlu%2BH%2B0IysTnv0DQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Software Engineer : ServiceNow Developer at GC Technologies Pvt Ltd",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:56",
+    "applied_at": null
+  },
+  {
+    "id": 2488,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462789545",
+    "title": "Generative AI Engineer",
+    "company": "Publicis Sapient",
+    "location": "Gurugram, Haryana, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4462789545/?eBP=CwEAAAGgZvaj5nd3egZMrdD6XE22KXYuqu23eIXsW-XpUzcpOgImLSVNRhKbeBVZgnUDh10_ELuhjFezP-IQHhAsVWFrYDlcqX5bpcbiC0WB06qbx9ZM_nUokgz9MUW3c6eV5Sx_p65jYY7aLuAcYb-yjYFgrOaNoO23h-XVi8FPyBsMZumv0El03XecRnLoBMfR2zwn0c0AIDjiCmrgm6TuO6zqWUXCEIO_jqkL6JmdE14L9fwmHAU0_iTLrM-wTbo68-S1_j04JCu7F4XG441w5rN2Hub5FOb33yYoAtBoqB2EzVkqpm38Sr21Dr31wHMv9KtJZYcL9KUAZKXsbGqJAL-fyj5eoH6gPTrxLNnZiaUlRYvH5fl7JVqyN2gZp4x_WjBkLysUmYEWOv_5J1wykn4E3u2odhWxFUvg3BY71pi074PjF0Qcb61jx1faWkeHoO0q4ttt9d2EmVMETr8a1w&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=IdbCxh6j6Y5fap27kqHnQw%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Generative AI Engineer at Publicis Sapient",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:55",
+    "applied_at": null
+  },
+  {
+    "id": 2487,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4459954801",
+    "title": "Terminal Bench Task Contributor",
+    "company": "Eshway",
+    "location": "Delhi, India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4459954801/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=QHyXNTim4xDVxaejuQpPqw%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Terminal Bench Task Contributor at Eshway",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:54",
+    "applied_at": null
+  },
+  {
+    "id": 2486,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4461375994",
+    "title": "Software Engineer II",
+    "company": "Jobgether",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4461375994/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=eCW%2FPYi35KWX6zOmaCTFWQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Software Engineer II at Jobgether",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:53",
+    "applied_at": null
+  },
+  {
+    "id": 2485,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462791090",
+    "title": "Remote Software Engineer – Go",
+    "company": "Turing",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4462791090/?eBP=CwEAAAGgZvaj5kKlkBUgc5dOL_fQ8fKGSYvZK4s_XinVDsjjPkM7WRZk6nsj_qiWk8EIawiYhc9k0gyRdFM7JS9e0xck9r9bpC4v7q_UD280-1wiE-F2cGDXtZqTEmkgPVCLqzUaP17BNwd0RmSKSQWGbIR9_9JqRO_zFStPtEKQmZvdW_0-kjeOl7EtDu_XaKKGcrJ2o83t2ydn0QWcq9nJ_0qCZqvuKNnk15Mextq_wuPNRNlQ-VR80FH1KpOfcxuM2KgvU7pPEBvh9S10YHGK0zhfV1EsC6qFl-KikTdFaS6ho6aFijjolvL-bEBGfQmKNeHgd9MZnvck38RreCIA7nKGa_kuWuTRVGDPg5B7sqfn4AnofvZMtX5xzChgje56MIO0CpmnmUmmfhOLz_x4aZXSDI2edMuGsS9Dtq4G1pHOWT2W62aA-d_lXL2gm5kEg_p0L62Ozw2wd8L2w8eoF7ztga-2-WhQrIKj950RRu5f0g&refId=ararfpLYnGZvNk9iEbu9Cg%3D%3D&trackingId=t3mjBHEfteuOrI8jKx1zlA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Remote Software Engineer – Go at Turing",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:52",
+    "applied_at": null
+  },
+  {
+    "id": 2484,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460435917",
+    "title": "CX / VoC Platform Consultant",
+    "company": "Deskzero",
+    "location": "Noida, Uttar Pradesh, India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460435917/?eBP=CwEAAAGgZvZq2sV59YxOMQljJFFO74ARVImn5uKUkJBup0JjeE1DGpqKxNCcX0JfwTRI2kR5dBNYYZsqEd8tukk3A03ct0K-rkm-3bKjhUJL6bXu1ukkoSvvqdSv95SLKKbH9Vb1W2wfRXIFc-MAqhONwRTlU2e4GdJDVBsWGU32f_7g7HV2WtHvJGnUh9v67H_gR1CaYcoQin8-9NRzWGxWCg2DpUcDiX2L5OPyB6z4BuAPqx-V5sXvXPq0GB4HK9aDaJk-pXx67C3BzRUUifKtC3NFnZ1P4Te8epEkvcGYLzOKgxWu5djCaEw8l2eu_TnUBMdrahgbSxvE3QzujbiiRYkJ3d7pZnCFl_fWf4pCd-jPyfMxBKdJA5cmz4-Tdd27hN_rSQCAqDnRN-MFC1y8AlFQBZhQXukxzbTl2_yInAOMkvDPEhBrl3ZUutxbKnQvkUF5dIWRdxxqSI2NuPoovckfQMLhi_GtG1yBD318RaCq6ZbJgWopMn0e&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=2wGw9UneT5B7yrtLT40o1g%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: CX / VoC Platform Consultant at Deskzero",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:45",
+    "applied_at": null
+  },
+  {
+    "id": 2483,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4461615013",
+    "title": "Java Full Stack Developer",
+    "company": "Reveille Technologies,Inc",
+    "location": "Bangalore Urban, Karnataka, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4461615013/?eBP=CwEAAAGgZvZq2q572mSW7HxXS1mWjzynQQfDfISKCOgeuAG88PwjTEL1iZErwjEVFMD-GpbIhmXr4uPZlHT_9WR810RzyP135u5coJrlW9xRnZb8Wet3W4fhv8LaGSV3ya7S2WpucqPfUNkj7fTUJUKJ4a9TeZaoXyF1O9lF8Q-y-K8yE1NTDNbARx61I-uEAg3nnzBeDnC1dfnvrdCz4G9uv-fzxCe_ITs4CUEeKgazsTdwEFBeGeJFZo48fOzzER7sfhqVkQDD4BaP1cNjb-aGhkctTK3y-87eb6RxQ6fqAT9IkP-RwaEJ3c2a4JzZjvotUWu5nVu3BT4_Tk4UzlGQnPkJnVQjt4wl1OxVINbAVexp2HXaqimOSBER05CzDu2JZJLDUg3Za1mZs82YfFRQXdM2tjOlR7xVVxoFh9sasUl6fk4DZvJUiCgd_cDheEdF7CN8z3goLTFPHoHGjzKHUm7qsqOSikUq_-NroOWPC-7U1jYPZl9-EiDSV7gf5O3CRgKszMm4Xw&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=hB5vLIT7v%2Bldq2QVdqpelA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Java Full Stack Developer at Reveille Technologies,Inc",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Matched: full stack",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:43",
+    "applied_at": null
+  },
+  {
+    "id": 2482,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460992504",
+    "title": "EHR Integration Engineer (Javascript)",
+    "company": "Zealant Consulting Group",
+    "location": "Bengaluru, Karnataka, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4460992504/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=of%2BPvuHzRC2XH0axKbHVBg%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: EHR Integration Engineer (Javascript) at Zealant Consulting Group",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:41",
+    "applied_at": null
+  },
+  {
+    "id": 2481,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460474532",
+    "title": "UX Designer Specialist",
+    "company": "Crossing Hurdles",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460474532/?eBP=CwEAAAGgZvZq2t5y70gHFittnCyX9aQExmpqv-4N1v0WhbKH_2RImrZ5YbWjnO-X7SUpEGxR_55KZK6Uoav-wLZrSOEOoietS7RIs5Vt31vk1UHBvkeuHl6CGdREg5MW_nm0cubYHVUwH_SAc2-IEfYOqazK0fAjY1gLDsgERa5Rxz47kqJnQ7rr7kYnHC6wDr6HQThil6TGsb2wL_dL4NcO7uKfDu_AQskWRnIxaWoFHFRj4503Ew-Dvf_jRiB7LEsEgc-3jpOlDjDqtBWdKklfyTKeCCc7R1NGr7Mf1HsQO3CLEznjrOZBHsbjWj-1NJTUut_ja05mBw1MnK5MxtuMvQQRHcR_ufC7x4wMSU5i1c5y91FCRfiYF6Xio6bkIXIdpqKTCDjFDjVYRToz99shyIYcbyrJzqjett-2ezbtFAb2fO6zrNC69PaFYQGIBSUCe3_Iqwil7bjEs2AWP1BcdnkSs2a-FvdMq8q0&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=Hm%2BBMa3GBx62hXzh51mp0A%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: UX Designer Specialist at Crossing Hurdles",
+    "apply_type": "easy-apply",
+    "score": 0,
+    "evaluation_reason": "Blacklisted fake company",
+    "status": "skipped",
+    "scanned_at": "2026-09-03 11:10:40",
+    "applied_at": null
+  },
+  {
+    "id": 2480,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460984494",
+    "title": "Senior Shopify Plus Developer",
+    "company": "Magma Holding Company",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460984494/?eBP=CwEAAAGgZvZq2rBtZa6x8svrM_3coZT6RRDwOuhpkN_MXA1tKWJ7_ZK9i613McGsCvRb8DB838TYOesfDgqjcSB_8KMZim3_vLbClrGbyPWa46vryspvuQk7jLEsl2B6Z1K3p_kiQ0L_zpA8sovEbIxjCxU65AwDsOVA2TKBS3WfXYzh-8wqQ4nIpjKUO78wcLKYDfLu02x-32y3XD49VE1SIOskUN4IUubwlB8wzxW3ikTCCgGDWBWWnOZTrs6Fct5VCgX3v8u0jlXkNajRGPMKCy2FbUT_fJmRbZJpgn7d8_O3Mjc43nMZNdmxG3sQsfzUkTrHMdIk-nPKVXSyHcgQmnNoc6lnj7qW21R3vF0SZcjxZPHzk-nUcc6euFDpz-VM1PRchdtqADUEfwgUG7zcTrxUjLF4kApgT41JtJ2o3V5ik-cgQqM6Tmlo2FaiyAMcVXQHhadeckfdZcy3g___FSx34e1bydSNokU2_h9LhhHcKEhhdWlOXOE9H5H0MP43TPF0eQQE&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=qEJDIGhSdOJU0oxAcKstTQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Senior Shopify Plus Developer at Magma Holding Company",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:39",
+    "applied_at": null
+  },
+  {
+    "id": 2479,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462797047",
+    "title": "Remote Software Engineer – Ruby",
+    "company": "Turing",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4462797047/?eBP=CwEAAAGgZvZq2sm-L7AU0upDFqT9v66QlWDX1SSj06d8z6TU_YguDe0LllNDvk2qKFvcY2QLKjVFFMvrYH3JIe95rJ_e0NmqegqvgcPz8F1L72QvALOhZ2XsIApLTiamvRTcSUU95ENypmHM8078zdr43KEdsw23esTxKbC0kJKKsJktpIv376IFpHcg83r0Bmns8UvsFOJITJoCxxXOxLAztzru7YdpzB2z2vGlOSR-bNrR0pOBQsULry2nG9WXFgzpVPn9s-G7R7_hhjbXW6z_nisgi_6ZBSY4cEwTKs36CWu0RKSVaYvbHTnmlylzD4IxEMXpILboIkeF2Aw3XBa2H2up4uAEia9aZv1MKh_zXKiXArQugEQYfIV-Sf4Be1AU0ASJcTOS1J9mSF77OQsmkdXvzIeFD2VQLX4uycjObi_Qi6N9CeSDYK-pvEeJEAUtEam0luvtEYc45zEt_k3Mdcz5Cm3zeQsEU5TId9iWP7g&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=aaQjOQETqeUxGMy%2B%2BBYtKA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Remote Software Engineer – Ruby at Turing",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:38",
+    "applied_at": null
+  },
+  {
+    "id": 2478,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4461357847",
+    "title": "Frontend Engineer",
+    "company": "Jobgether",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4461357847/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=CaZKwZsMl655gh4TzFVApg%3D%3D&trackingId=wa1%2Bge0IcQAkVGT%2BmVE3%2BQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Frontend Engineer at Jobgether",
+    "apply_type": "easy-apply",
+    "score": 1.8,
+    "evaluation_reason": "Matched: frontend",
+    "status": "applied",
+    "scanned_at": "2026-09-03 11:10:37",
+    "applied_at": "2026-09-03 11:14:00"
+  },
+  {
+    "id": 2477,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462781946",
+    "title": "Remote JavaScript Developer",
+    "company": "Turing",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4462781946/?eBP=CwEAAAGgZvZkZ4bUZJ6bQaM9wLJQw51mlycbCInoblZ6TM4P_zEyUcpEoVr7w0god5fcbNeOXienT4zyFGxmbrR5s0CmO0Mhcnnb-rviArPtv9eVCDPY-qViF5_SmVU1swLf4PMT1kOv5mIjL3QaWyqq0YOTFEc_GFNEMAvsBelTO2Nx57PK3X-FNIQ-6tYSBMjI6_m5_2XBeLmyxUq9m1wYtSLmCBz7dcSuj0ePxrLc0l_rooC5tfSH0tyirGj0lQdM93XytRDtpjnZgmKAiiKZ1GMJbObQfH25XdRDHXZRiDTeBX8T1FEwPx1aYCh2dUN_UpGVRIAxYTaPU-Is5VEphgg_4XUJPSuSnNEd0rG8fvqP7nfsPPMgth7ttVxa67xABvL6DWpDWJWdiJ8o0qO0Qmz4dg4oi7XiIaLxJJGWaFC6ujWw59_Z1EcT4rxwj30PMM0Tq-y547MnD9GdNug47SpMumktp_r5_OWS65D8H48jifzSPuucTZrEc7yOtGFdo76BKs5Twg&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=DEN7I1bIX1jhbqKGZUMO9Q%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Remote JavaScript Developer at Turing",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:29",
+    "applied_at": null
+  },
+  {
+    "id": 2476,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460485792",
+    "title": "Adobe Journey Optimizer (AJO) - Developer",
+    "company": "Aventis Technology",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460485792/?eBP=CwEAAAGgZvZkZ3lZqlz50est2APa2s1ywN77KAmGd6TFl4tIJt3lmshP7VfDjE6WkfTAl2VF1gxX6XNg-Kuiev6XuYQZHnBTgbsxuoxtLVQ-5jaBf9kiggkYJSubbdcmeeRq4OrsedZwbX1DAtJ-TSaaA-kYFGoHoQl5UZou9d4V6CmXMIi6uZhOJWikOxJIcBmAm8YxkWqN35hp0lGrGw5of6BMxYMS95k8Znypyi2Ta5PKYyF0A-_x8UG8wc09lgiiQIVlRHjPmkfV9U7M1Hs74Cp4gKrib6cuVoDWHKnwzEyRFDx0_v9ZpQsgN7EIKiqZJZPyRUPgC4dgTRlQum10ZzO-wveLC3EV3nxY2juM-fkjxCTVR82lhjyDiPw91vyWJNYWfmN6ENcO28FrZXFGCSMKre_wpv-C1aNZWHIAojk-HZ8T37DBf4M6nB4qH9peHtzVZeCnRy4abakeKE8g5uj-d9STxf8fudjNGNRElhEhtglpNhivJPYW3f5_ppaW_Q-fMZIcDmT1Wba50dC83BicQ-WUDvs&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=uwA5wdWvvS2gV4E9xeMpmg%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Adobe Journey Optimizer (AJO) - Developer at Aventis Technology",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:28",
+    "applied_at": null
+  },
+  {
+    "id": 2475,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460487297",
+    "title": "🎮 Hiring: Minecraft Bedrock Developer",
+    "company": "PSM Craftify Gaming Productions Pvt. Ltd.",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460487297/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=ihJYf2mCaMmWuN6N8yRuLQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: 🎮 Hiring: Minecraft Bedrock Developer at PSM Craftify Gaming Productions Pvt. Ltd.",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:27",
+    "applied_at": null
+  },
+  {
+    "id": 2474,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4462774463",
+    "title": "Online Java Coding Mentor",
+    "company": "Codeyoung",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4462774463/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=TJOaGPG9bYHSAww3nhf3nA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Online Java Coding Mentor at Codeyoung",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:26",
+    "applied_at": null
+  },
+  {
+    "id": 2473,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460985658",
+    "title": "Web Frontend Engineer - JS, CSS, React, Flutter",
+    "company": "Jobgether",
+    "location": "India (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460985658/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=hioIz8e85w%2BNEQhA0288zA%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Web Frontend Engineer - JS, CSS, React, Flutter at Jobgether",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Matched: frontend, css",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:25",
+    "applied_at": null
+  },
+  {
+    "id": 2472,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4459950274",
+    "title": "Senior Siemens Teamcenter Upgrade & Migration Developer",
+    "company": "CloudZen Innovations",
+    "location": "Pune Division, Maharashtra, India (Hybrid)",
+    "url": "https://www.linkedin.com/jobs/view/4459950274/?eBP=CwEAAAGgZvZkZ8VenS9-mKIeiX6zF4XRI5Np-90MeM2Ei0hpzKHbW5xpoUyz1soEe_QUu6MBgkjGZ_99KPf5221JMvkgRXflusDihvj04uPSU2592-icLkQ57xtSMUhu5aWBz5KoLIPouk1PnQQ0BJBYaP4heBBgE71tJFvqo3nNcxwWT6BJN7v-lkTY4F-cnzIdW1-AE3uGwogKKo8Khal0wXiwiMyEwRLW6aAo0km_ppyjhynqMEuiDeWsJmDmnBUHsQ-yABZCIbARA813VW62WhBvBURZ9dWU13yWx9YGTE71SbAtDkv0KQh0t-MLZdy7xF9s49VwtrKTQwhjKAwt-ieorkO-f1Dq-43bZQjC1jDi_7zEh7S55uE6sJKqkYorQic-kATVhqIt_T2c9WzpUMDWOJWkG4ZWJXxnHDwSNbV1kmEo44Rk9WgStIzbeDpPxmtmapP7vrXXytLqiQcseQwiR573ZEgleyKhpmmW-jrew5gf_J0j7VRmlkUWO9qZI9jjy3oz-gE&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=Rj66nRqmRYeRM9cpLn4Uzg%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Senior Siemens Teamcenter Upgrade & Migration Developer at CloudZen Innovations",
+    "apply_type": "easy-apply",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
+    "status": "evaluated",
+    "scanned_at": "2026-09-03 11:10:23",
+    "applied_at": null
+  },
+  {
+    "id": 2471,
+    "platform": "linkedin",
+    "external_job_id": "linkedin_4460487322",
+    "title": "Software Engineer | Remote",
+    "company": "Crossing Hurdles",
+    "location": "APJ (Remote)",
+    "url": "https://www.linkedin.com/jobs/view/4460487322/?eBP=NOT_ELIGIBLE_FOR_CHARGING&refId=JhxvJM3cWF%2B4VTJzOInm%2FQ%3D%3D&trackingId=ql5CmVpNtxqHrgmI4gg2wQ%3D%3D&trk=flagship3_search_srp_jobs",
+    "jd_text": "LinkedIn Remote/Hybrid Easy Apply Job: Software Engineer | Remote at Crossing Hurdles",
+    "apply_type": "easy-apply",
+    "score": 0,
+    "evaluation_reason": "Blacklisted fake company",
+    "status": "skipped",
+    "scanned_at": "2026-09-03 11:10:22",
+    "applied_at": null
+  },
+  {
     "id": 2462,
     "platform": "indeed",
     "external_job_id": "indeed_b6d5e33b199e4df4",
@@ -43,9 +539,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-24 13:31:20",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:54:45"
   },
   {
     "id": 2453,
@@ -59,9 +555,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 13:31:19",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:54:09"
   },
   {
     "id": 2447,
@@ -75,9 +571,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-24 13:31:19",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:53:47"
   },
   {
     "id": 2432,
@@ -123,9 +619,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "failed",
     "scanned_at": "2026-08-24 13:31:12",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:53:07"
   },
   {
     "id": 2408,
@@ -171,9 +667,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "failed",
     "scanned_at": "2026-08-24 13:31:11",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:51:43"
   },
   {
     "id": 2369,
@@ -187,9 +683,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-24 13:31:04",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:49:52"
   },
   {
     "id": 2360,
@@ -379,9 +875,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:18",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:31:39"
   },
   {
     "id": 2315,
@@ -395,9 +891,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:17",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:30:48"
   },
   {
     "id": 2314,
@@ -411,9 +907,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:16",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:30:01"
   },
   {
     "id": 2313,
@@ -427,9 +923,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:15",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:29:15"
   },
   {
     "id": 2312,
@@ -443,9 +939,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:06",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:28:34"
   },
   {
     "id": 2311,
@@ -459,9 +955,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:05",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:27:45"
   },
   {
     "id": 2310,
@@ -475,9 +971,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:03",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:26:45"
   },
   {
     "id": 2309,
@@ -491,9 +987,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:02",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:26:03"
   },
   {
     "id": 2308,
@@ -507,9 +1003,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:01",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:25:14"
   },
   {
     "id": 2307,
@@ -523,9 +1019,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:22:00",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:24:29"
   },
   {
     "id": 2306,
@@ -539,9 +1035,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:59",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:23:51"
   },
   {
     "id": 2305,
@@ -555,9 +1051,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:50",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:23:12"
   },
   {
     "id": 2304,
@@ -571,9 +1067,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:49",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:22:23"
   },
   {
     "id": 2303,
@@ -587,9 +1083,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:48",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:21:40"
   },
   {
     "id": 2302,
@@ -603,9 +1099,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:47",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:20:53"
   },
   {
     "id": 2301,
@@ -619,9 +1115,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:45",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:20:10"
   },
   {
     "id": 2300,
@@ -635,9 +1131,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:44",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:19:28"
   },
   {
     "id": 2299,
@@ -651,9 +1147,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:43",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:18:31"
   },
   {
     "id": 2298,
@@ -667,9 +1163,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-24 12:21:35",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:17:50"
   },
   {
     "id": 2297,
@@ -683,9 +1179,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-24 12:21:34",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:16:54"
   },
   {
     "id": 2296,
@@ -699,9 +1195,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:33",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:16:41"
   },
   {
     "id": 2295,
@@ -715,9 +1211,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:31",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:16:01"
   },
   {
     "id": 2294,
@@ -731,9 +1227,9 @@
     "apply_type": "easy-apply",
     "score": 1,
     "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-24 12:21:30",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:15:18"
   },
   {
     "id": 2293,
@@ -1555,14 +2051,14 @@
     "id": 2217,
     "platform": "indeed",
     "external_job_id": "indeed_a1b2c3d4e5f67890",
-    "title": "Full Stack Developer",
-    "company": "Softdienst Tech",
-    "location": "Remote",
+    "title": "Front End Developer",
+    "company": "SMATIK Software",
+    "location": "Remote in Karnataka",
     "url": "https://in.indeed.com/viewjob?jk=a1b2c3d4e5f67890",
-    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Softdienst Tech",
+    "jd_text": "Indeed Easily Apply Job: Front End Developer at SMATIK Software",
     "apply_type": "easy-apply",
-    "score": 1.8,
-    "evaluation_reason": "Matched: full stack",
+    "score": 1,
+    "evaluation_reason": "Unrelated / Low Match Role",
     "status": "evaluated",
     "scanned_at": "2026-08-17 14:18:23",
     "applied_at": null
@@ -1579,9 +2075,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:23",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:47:23"
   },
   {
     "id": 2211,
@@ -1595,9 +2091,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:23",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:47:05"
   },
   {
     "id": 2208,
@@ -1611,9 +2107,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:23",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:46:44"
   },
   {
     "id": 2205,
@@ -1659,9 +2155,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: ui developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:17",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:46:23"
   },
   {
     "id": 2196,
@@ -1691,9 +2187,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:17",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:46:04"
   },
   {
     "id": 2190,
@@ -1723,9 +2219,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: mean stack",
-    "status": "evaluated",
+    "status": "failed",
     "scanned_at": "2026-08-17 14:18:16",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:44:59"
   },
   {
     "id": 2184,
@@ -1771,9 +2267,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: ui developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:15",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:42:49"
   },
   {
     "id": 2175,
@@ -1787,9 +2283,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:15",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:42:26"
   },
   {
     "id": 2172,
@@ -1811,17 +2307,17 @@
     "id": 2169,
     "platform": "indeed",
     "external_job_id": "indeed_fedcba9876543210",
-    "title": "Software Developer",
-    "company": "UPREP TECHNOLOGY",
+    "title": "Full Stack Developer",
+    "company": "Jurisnexa Global Legal & Associoates",
     "location": "Remote",
     "url": "https://in.indeed.com/viewjob?jk=fedcba9876543210",
-    "jd_text": "Indeed Easily Apply Job: Software Developer at UPREP TECHNOLOGY",
+    "jd_text": "Indeed Easily Apply Job: Full Stack Developer at Jurisnexa Global Legal & Associoates",
     "apply_type": "easy-apply",
-    "score": 1,
-    "evaluation_reason": "Unrelated / Low Match Role",
-    "status": "evaluated",
+    "score": 1.8,
+    "evaluation_reason": "Matched: full stack",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:15",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:42:06"
   },
   {
     "id": 2166,
@@ -1883,9 +2379,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:14",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:41:40"
   },
   {
     "id": 2154,
@@ -1915,9 +2411,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: mean stack",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:09",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:41:13"
   },
   {
     "id": 2148,
@@ -1931,9 +2427,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:09",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:40:54"
   },
   {
     "id": 2145,
@@ -2011,9 +2507,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:08",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:40:32"
   },
   {
     "id": 2130,
@@ -2059,9 +2555,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:07",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:40:11"
   },
   {
     "id": 2121,
@@ -2075,9 +2571,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 14:18:07",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:39:48"
   },
   {
     "id": 2118,
@@ -2107,9 +2603,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 14:18:07",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:39:25"
   },
   {
     "id": 2112,
@@ -2251,9 +2747,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: frontend",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-08-17 13:51:38",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:39:07"
   },
   {
     "id": 2052,
@@ -2347,9 +2843,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: full stack",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 13:51:37",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:38:48"
   },
   {
     "id": 2034,
@@ -2395,9 +2891,9 @@
     "apply_type": "easy-apply",
     "score": 1.8,
     "evaluation_reason": "Matched: web developer",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-08-17 13:51:36",
-    "applied_at": null
+    "applied_at": "2026-09-03 11:38:37"
   },
   {
     "id": 2025,
