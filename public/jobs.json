@@ -1,5 +1,21 @@
 [
   {
+    "id": 2834,
+    "platform": "naukri",
+    "external_job_id": "naukri_281122504403",
+    "title": "Angular Developer",
+    "company": "Datagaps",
+    "location": "Hyderabad",
+    "url": "https://www.naukri.com/job-listings-angular-developer-datagaps-india-pvt-ltd-hyderabad-2-to-7-years-281122504403",
+    "jd_text": "Naukri Job: Angular Developer at Datagaps | Experience: 2-7 Yrs | Location: Hyderabad | Key Skills: Backendhtml5Javascriptproduct life cycleProgrammingXHTMLHRUnit testing, Backend, html5, Javascript, product life cycle, Programming, XHTML, HR",
+    "apply_type": "external",
+    "score": 0,
+    "evaluation_reason": "External Company Site Redirect (Skipped)",
+    "status": "skipped",
+    "scanned_at": "2026-09-10 14:26:51",
+    "applied_at": null
+  },
+  {
     "id": 2674,
     "platform": "naukri",
     "external_job_id": "naukri_290626503099",
@@ -40,10 +56,10 @@
     "location": "Hyderabad",
     "url": "https://www.naukri.com/job-listings-angular-developer-cts-long-term-contract-role-cloudxtreme-hyderabad-6-to-11-years-040926925572",
     "jd_text": "Naukri Job: Angular Developer | CTS ( Long term Contract Role) at Cloudxtreme | Experience: 6-11 Yrs | Location: Hyderabad | Key Skills: AngularAngularjsJavaCSSCss/Css3JavascriptHTMLCs, Angular, Angularjs, Java, CSS, Css/Css3, Javascript, HTML",
-    "apply_type": "external",
+    "apply_type": "easy-apply",
     "score": 3.4000000000000004,
     "evaluation_reason": "External Company Site Redirect (Skipped)",
-    "status": "skipped",
+    "status": "evaluated",
     "scanned_at": "2026-09-10 14:07:44",
     "applied_at": "2026-09-10 14:18:04"
   },
@@ -56,7 +72,7 @@
     "location": "Mumbai",
     "url": "https://www.naukri.com/job-listings-angular-developer-logicplanet-it-services-mumbai-3-to-6-years-200226502370",
     "jd_text": "Naukri Job: Angular Developer at Logic Planet | Experience: 3-6 Yrs | Location: Mumbai | Key Skills: UsageArchitectureBusiness AnalystTime managementWeb applicationAgileDesign developmentUnit testing, Usage, Architecture, Business Analyst, Time management, Web application, Agile, Design development",
-    "apply_type": "easy-apply",
+    "apply_type": "external",
     "score": 1.7999999999999998,
     "evaluation_reason": "Matched: angular",
     "status": "evaluated",
@@ -317,7 +333,7 @@
     "evaluation_reason": "External Company Site Redirect (Skipped)",
     "status": "skipped",
     "scanned_at": "2026-09-10 14:06:47",
-    "applied_at": "2026-09-10 14:18:19"
+    "applied_at": "2026-09-10 14:28:28"
   },
   {
     "id": 2630,

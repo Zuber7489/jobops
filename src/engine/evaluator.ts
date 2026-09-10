@@ -7,7 +7,9 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
 
   console.log(`\n⚡ [Instant Match Engine] Evaluating scanned jobs for candidate ${profile.name}...`);
 
-  const whereClause = forceAll ? `WHERE status IN ('scanned', 'evaluated')` : `WHERE status = 'scanned'`;
+  const whereClause = forceAll 
+    ? `WHERE status IN ('scanned', 'evaluated') AND (apply_type IS NULL OR apply_type != 'external')` 
+    : `WHERE status = 'scanned' AND (apply_type IS NULL OR apply_type != 'external')`;
   const jobsToEvaluate = db.prepare(`SELECT * FROM jobs ${whereClause}`).all() as JobRecord[];
 
   const primaryTech = ['angular', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer', 'mean stack', 'full stack'];

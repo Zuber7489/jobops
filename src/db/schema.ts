@@ -76,7 +76,8 @@ export function saveJobRecord(job: Omit<JobRecord, 'id' | 'scanned_at'>): number
       location=excluded.location,
       url=excluded.url,
       jd_text=excluded.jd_text,
-      apply_type=excluded.apply_type;
+      apply_type=excluded.apply_type,
+      status=CASE WHEN jobs.status = 'applied' THEN 'applied' ELSE excluded.status END;
   `);
 
   const recordToInsert = {
@@ -99,11 +100,20 @@ export function getUnappliedJobs(platform?: JobRecord['platform'], minScore: num
   const db = getDb();
   if (platform) {
     return db.prepare(`
-      SELECT * FROM jobs WHERE platform = ? AND score >= ? AND status IN ('scanned', 'evaluated') ORDER BY score DESC
+      SELECT * FROM jobs 
+      WHERE platform = ? 
+        AND score >= ? 
+        AND status IN ('scanned', 'evaluated') 
+        AND (apply_type IS NULL OR apply_type != 'external')
+      ORDER BY score DESC
     `).all(platform, minScore) as JobRecord[];
   }
   return db.prepare(`
-    SELECT * FROM jobs WHERE score >= ? AND status IN ('scanned', 'evaluated') ORDER BY score DESC
+    SELECT * FROM jobs 
+    WHERE score >= ? 
+      AND status IN ('scanned', 'evaluated') 
+      AND (apply_type IS NULL OR apply_type != 'external')
+    ORDER BY score DESC
   `).all(minScore) as JobRecord[];
 }
 
