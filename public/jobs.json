@@ -58,10 +58,10 @@
     "jd_text": "Naukri Job: Angular Developer | CTS ( Long term Contract Role) at Cloudxtreme | Experience: 6-11 Yrs | Location: Hyderabad | Key Skills: AngularAngularjsJavaCSSCss/Css3JavascriptHTMLCs, Angular, Angularjs, Java, CSS, Css/Css3, Javascript, HTML",
     "apply_type": "easy-apply",
     "score": 3.4000000000000004,
-    "evaluation_reason": "External Company Site Redirect (Skipped)",
+    "evaluation_reason": "Matched: angular, scss, css, html",
     "status": "evaluated",
     "scanned_at": "2026-09-10 14:07:44",
-    "applied_at": "2026-09-10 14:18:04"
+    "applied_at": "2026-09-10 14:36:25"
   },
   {
     "id": 2668,
@@ -75,7 +75,7 @@
     "apply_type": "external",
     "score": 1.7999999999999998,
     "evaluation_reason": "Matched: angular",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-09-10 14:07:42",
     "applied_at": null
   },
@@ -123,7 +123,7 @@
     "apply_type": "external",
     "score": 2.2,
     "evaluation_reason": "Matched: angular, css, html",
-    "status": "evaluated",
+    "status": "skipped",
     "scanned_at": "2026-09-10 14:07:31",
     "applied_at": null
   },

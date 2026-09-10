@@ -460,7 +460,14 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
     await page.waitForTimeout(2000);
 
     // 8. Confirm application status
+    const currentUrl = page.url();
+    const currentTitle = await page.title().catch(() => '');
+    const isUrlConfirmed = currentUrl.includes('myapply/saveApply') || currentTitle.includes('Apply Confirmation');
+
     const isNowApplied = await page.evaluate(() => {
+      if (window.location.href.includes('myapply/saveApply') || document.title.includes('Apply Confirmation')) {
+        return true;
+      }
       const container = document.querySelector('[class*="apply-button-container"]');
       const text = (container as HTMLElement)?.innerText || container?.textContent || '';
       const toasts = Array.from(document.querySelectorAll('.toast, .snackbar, [class*="toast"], [class*="success"]')).map(t => (t as HTMLElement)?.innerText || t?.textContent || '');
@@ -468,7 +475,7 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
       return /applied/i.test(text.trim()) || hasSuccessToast;
     });
 
-    if (isNowApplied || hasChatbot) {
+    if (isNowApplied || isUrlConfirmed || hasChatbot) {
       console.log(`🎉 [Naukri Apply Success] Successfully applied for "${job.title}" at ${job.company}!`);
       updateJobStatus(job.external_job_id, 'applied');
       return 'applied';
