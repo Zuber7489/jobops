@@ -21,7 +21,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
   const slug = `${querySlug}-jobs-in-${locationSlug}`;
   const encodedQuery = encodeURIComponent(query);
   const encodedLocation = encodeURIComponent(location);
-  const baseUrl = `https://www.naukri.com/${slug}?k=${encodedQuery}&l=${encodedLocation}`;
+  const expParam = 2; // Target 2-3 YOE for candidate Mohammad Zuber (2.5 YOE)
+  const baseUrl = `https://www.naukri.com/${slug}?k=${encodedQuery}&l=${encodedLocation}&experience=${expParam}`;
 
   let browserContext: BrowserContext | null = null;
   let standaloneBrowser: any = null;
@@ -86,8 +87,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
     const blacklisted = profile.blacklistedCompanies || [];
 
     for (let pageNum = 0; pageNum < maxPages; pageNum++) {
-      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2` (Naukri requires clean slug without query params for page 2+)
-      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}`;
+      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2?experience=2`
+      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}?experience=${expParam}`;
       console.log(`🌐 Navigating to Naukri Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
@@ -156,9 +157,35 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
           const isExternal = apiJob ? (apiJob.companyApplyJob === true || !!apiJob.applyRedirectUrl) : false;
           const applyType = isExternal ? 'external' : 'easy-apply';
 
+          // Experience Check: Candidate has 2.5 YOE (strictly target 2-3 YOE, max 1-4 YOE)
+          let minExp = 0;
+          let maxExp = 99;
+          const expMatch = expText.match(/(\d+)(?:\s*-\s*(\d+))?\s*(?:yr|year)/i) || url.match(/(\d+)-to-(\d+)-years/i);
+          if (expMatch) {
+            minExp = parseInt(expMatch[1], 10);
+            if (expMatch[2]) maxExp = parseInt(expMatch[2], 10);
+          }
+          const isOverExperienced = minExp >= 4; // Skip any job requiring 4+, 5+, 6+, 10+ years
+          const isSeniorTitle = /\b(lead|principal|architect|director|staff|manager|team lead|head)\b/i.test(title);
+
           const isBlacklisted = blacklisted.some(b => company.toLowerCase().includes(b.toLowerCase()));
-          const status = isBlacklisted ? 'skipped' : (isExternal ? 'skipped' : 'scanned');
-          const reason = isBlacklisted ? 'Blacklisted company' : (isExternal ? 'External Company Site Redirect (Skipped)' : '');
+          
+          let status: JobRecord['status'] = 'scanned';
+          let reason = '';
+
+          if (isBlacklisted) {
+            status = 'skipped';
+            reason = 'Blacklisted company';
+          } else if (isExternal) {
+            status = 'skipped';
+            reason = 'External Company Site Redirect (Skipped)';
+          } else if (isOverExperienced) {
+            status = 'skipped';
+            reason = `Experience mismatch: Requires ${minExp}+ Yrs (Candidate has ${profile.totalYoe} YOE)`;
+          } else if (isSeniorTitle) {
+            status = 'skipped';
+            reason = `Senior/Lead title mismatch: "${title}"`;
+          }
 
           const jdSummary = [
             `Naukri Job: ${title} at ${company}`,
@@ -186,7 +213,9 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
           if (status === 'scanned') {
             scrapedJobs.push(jobRecord as JobRecord);
             savedCount++;
-            console.log(`✨ [Direct Easy Apply Found]: "${title}" at ${company}`);
+            console.log(`✨ [Direct Easy Apply Found]: "${title}" (${expText || '2-3 Yrs'}) at ${company}`);
+          } else if (isOverExperienced || isSeniorTitle) {
+            console.log(`⏩ [Senior/Experience Mismatch Skipped]: "${title}" (${expText}) at ${company}`);
           } else if (isExternal) {
             externalCount++;
           } else if (isBlacklisted) {

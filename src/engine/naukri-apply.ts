@@ -368,6 +368,17 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
       return 'not_logged_in';
     }
 
+    // 1b. Strict Experience & Seniority Guard (Candidate has 2.5 YOE: strictly target 2-3 yrs, max 1-4 yrs)
+    const combinedText = `${job.title} ${job.url} ${job.jd_text}`.toLowerCase();
+    const isOverExperienced = /(\b[4-9]\s*to\s*\d+\s*years|\b1\d\s*to\s*\d+\s*years|\b[4-9]\s*-\s*\d+\s*yrs|\b[4-9]\+\s*yrs|\b[4-9]\+\s*years)/i.test(combinedText);
+    const isSeniorTitle = /\b(lead|principal|architect|director|staff|manager|team lead|head)\b/i.test(job.title);
+
+    if (isOverExperienced || isSeniorTitle) {
+      console.log(`⏩ [Senior/Experience Mismatch]: "${job.title}" requires 4+ years (Candidate has ${profile.totalYoe} YOE). Skipping.`);
+      updateJobStatus(job.external_job_id, 'skipped');
+      return 'skipped';
+    }
+
     // 2. Check for external company site apply button FIRST (to skip external redirects immediately)
     const isExternalSite = await page.evaluate(() => {
       const compSiteBtn = document.querySelector('#company-site-button, [class*="company-site"], a[class*="company-site"]');

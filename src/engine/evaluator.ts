@@ -40,15 +40,66 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
     }
 
     const titleLower = job.title.toLowerCase();
-    const textToMatch = `${job.title} ${job.company} ${job.jd_text}`.toLowerCase();
+    const textToMatch = `${job.title} ${job.company} ${job.location || ''} ${job.jd_text}`.toLowerCase();
+
+    // 1. Strict Experience & Seniority Guard (Candidate has 2.5 YOE: strictly target 2-3 YOE, max 1-4 YOE)
+    let minExp = -1;
+    let maxExp = -1;
+    const expMatch = textToMatch.match(/experience:\s*(\d+)(?:\s*-\s*(\d+))?\s*(?:yr|year)/i) 
+      || (job.url || '').match(/(\d+)-to-(\d+)-years/i)
+      || textToMatch.match(/(\d+)\s*(?:to|-)\s*(\d+)\s*(?:years?|yrs?)/i);
+    if (expMatch) {
+      minExp = parseInt(expMatch[1], 10);
+      if (expMatch[2]) maxExp = parseInt(expMatch[2], 10);
+    }
+
+    const hasSeniorExpRegex = /(\b[4-9]\s*to\s*\d+\s*years|\b1\d\s*to\s*\d+\s*years|\b[4-9]\s*-\s*\d+\s*yrs|\b[4-9]\+\s*yrs|\b[4-9]\+\s*years)/i.test(textToMatch + ' ' + (job.url || ''));
+    const isSeniorTitle = /\b(lead|principal|architect|director|staff|manager|team lead|head)\b/i.test(titleLower);
+
+    if (minExp >= 4 || hasSeniorExpRegex || isSeniorTitle) {
+      const skipReason = isSeniorTitle 
+        ? `Senior/Lead title mismatch ("${job.title}")`
+        : `Experience mismatch: Requires ${minExp > 0 ? minExp : '4'}+ Yrs (Candidate has ${profile.totalYoe} YOE)`;
+
+      db.prepare(`
+        UPDATE jobs 
+        SET score = 0.0, evaluation_reason = ?, status = 'skipped' 
+        WHERE external_job_id = ?
+      `).run(skipReason, job.external_job_id);
+
+      job.score = 0.0;
+      job.evaluation_reason = skipReason;
+      job.status = 'skipped';
+      console.log(`⏩ [Senior/Experience Mismatch Skipped] Job #${job.id}: ${job.title} @ ${job.company} (${skipReason})`);
+      continue;
+    }
 
     // Direct check for unrelated/non-Angular roles in title
     const isUnrelatedRole = /backend|back-end|java|c\+\+|\.net|c#|python|django|flask|php|laravel|ruby|rails|golang|android|ios|flutter|react native|qa|testing|tester|data engineer|data scientist|devops|sharepoint|shopify|musician|annotation|mentor|sales|recruiter/i.test(titleLower);
 
-    let score = 1.0; // Baseline candidate score (starts at 1.0 for non-matching roles)
+    let score = 1.0; // Baseline candidate score
     const matchedKeywords: string[] = [];
 
-    // 1. Primary Stack Matching (Angular, RxJS, Signals, TS, Frontend, UI Developer)
+    // 2. Exact 2-3 YOE Target Boost
+    if (minExp >= 0 && minExp <= 3 && (maxExp >= 2 || maxExp === -1)) {
+      score += 1.0;
+      matchedKeywords.push('2-3 YOE (exact match)');
+    }
+
+    // 3. Workplace Type Matching (MAIN FOCUS: REMOTE, followed by Hybrid, then Onsite)
+    const locLower = (job.location || '').toLowerCase();
+    const isRemote = /remote|work from home|wfh|anywhere/i.test(locLower) || /remote|work from home|wfh/i.test(textToMatch);
+    const isHybrid = /hybrid/i.test(locLower) || /hybrid/i.test(textToMatch);
+
+    if (isRemote) {
+      score += 1.5; // Top priority boost for remote roles
+      matchedKeywords.push('remote (top priority)');
+    } else if (isHybrid) {
+      score += 0.8; // High priority for hybrid roles
+      matchedKeywords.push('hybrid');
+    }
+
+    // 4. Primary Stack Matching (Angular, RxJS, Signals, TS, Frontend, UI Developer)
     for (const tech of primaryTech) {
       if (textToMatch.includes(tech)) {
         score += 0.8;
@@ -57,7 +108,7 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       }
     }
 
-    // 2. Secondary Skill Matching
+    // 5. Secondary Skill Matching
     for (const tech of secondaryTech) {
       if (textToMatch.includes(tech)) {
         score += 0.2;
@@ -65,7 +116,7 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       }
     }
 
-    // 3. Penalty for Unrelated Technologies
+    // 6. Penalty for Unrelated Technologies
     for (const tech of unrelatedTech) {
       if (textToMatch.includes(tech)) {
         score -= 1.0;
