@@ -86,8 +86,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
     const blacklisted = profile.blacklistedCompanies || [];
 
     for (let pageNum = 0; pageNum < maxPages; pageNum++) {
-      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2?k=...`
-      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}?k=${encodedQuery}&l=${encodedLocation}`;
+      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2` (Naukri requires clean slug without query params for page 2+)
+      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}`;
       console.log(`🌐 Navigating to Naukri Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });

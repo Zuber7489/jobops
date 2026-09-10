@@ -1,5 +1,37 @@
 [
   {
+    "id": 2994,
+    "platform": "naukri",
+    "external_job_id": "naukri_201123500309",
+    "title": "Angular Developer",
+    "company": "Girnar Newtel Solutions",
+    "location": "Hyderabad",
+    "url": "https://www.naukri.com/job-listings-angular-developer-girnar-newtel-hyderabad-1-to-4-years-201123500309",
+    "jd_text": "Naukri Job: Angular Developer at Girnar Newtel Solutions | Experience: 1-4 Yrs | Location: Hyderabad | Key Skills: jQueryGITDebuggingJavascriptHTMLUnit testingTroubleshootingJIRA, jQuery, GIT, Debugging, Javascript, HTML, Unit testing, Troubleshooting",
+    "apply_type": "external",
+    "score": 0,
+    "evaluation_reason": "External Company Site Redirect (Skipped)",
+    "status": "skipped",
+    "scanned_at": "2026-09-10 14:44:32",
+    "applied_at": null
+  },
+  {
+    "id": 2992,
+    "platform": "naukri",
+    "external_job_id": "naukri_280525503692",
+    "title": "Angular Developer",
+    "company": "Realizer Technologies",
+    "location": "Pune",
+    "url": "https://www.naukri.com/job-listings-angular-developer-realizer-techonlogies-pune-2-to-3-years-280525503692",
+    "jd_text": "Naukri Job: Angular Developer at Realizer Technologies | Experience: 2-3 Yrs | Location: Pune | Key Skills: BasicSIDECSSjQueryhtml5JavascriptHTMLbootstrap, Basic, SIDE, CSS, jQuery, html5, Javascript, HTML",
+    "apply_type": "external",
+    "score": 0,
+    "evaluation_reason": "External Company Site Redirect (Skipped)",
+    "status": "skipped",
+    "scanned_at": "2026-09-10 14:44:28",
+    "applied_at": null
+  },
+  {
     "id": 2834,
     "platform": "naukri",
     "external_job_id": "naukri_281122504403",
@@ -59,9 +91,9 @@
     "apply_type": "easy-apply",
     "score": 3.4000000000000004,
     "evaluation_reason": "Matched: angular, scss, css, html",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-09-10 14:07:44",
-    "applied_at": "2026-09-10 14:36:25"
+    "applied_at": "2026-09-10 14:37:45"
   },
   {
     "id": 2668,
@@ -187,9 +219,9 @@
     "apply_type": "easy-apply",
     "score": 1.7999999999999998,
     "evaluation_reason": "Matched: angular, typescript, rest",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-09-10 14:07:09",
-    "applied_at": null
+    "applied_at": "2026-09-10 14:40:07"
   },
   {
     "id": 2652,
