@@ -118,11 +118,18 @@ export function startDashboardServer(port: number = 3000) {
       const avgScoreRow = db.prepare(`SELECT AVG(score) as avgScore FROM jobs WHERE score > 0`).get() as any;
       const avgScore = avgScoreRow && avgScoreRow.avgScore ? avgScoreRow.avgScore : 0.0;
 
+      const linkedinCount = (db.prepare(`SELECT COUNT(*) as c FROM jobs WHERE platform = 'linkedin'`).get() as any).c;
+      const indeedCount = (db.prepare(`SELECT COUNT(*) as c FROM jobs WHERE platform = 'indeed'`).get() as any).c;
+      const naukriCount = (db.prepare(`SELECT COUNT(*) as c FROM jobs WHERE platform = 'naukri'`).get() as any).c;
+
       res.json({
         totalScanned,
         topMatches,
         totalApplied,
-        avgScore
+        avgScore,
+        linkedinCount,
+        indeedCount,
+        naukriCount
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -416,23 +423,49 @@ export function startDashboardServer(port: number = 3000) {
     }
   });
 
-  // Action 1: POST /api/scan
+  // Action 1: POST /api/scan (Supports platform: linkedin | indeed | naukri)
   app.post('/api/scan', async (req, res) => {
     try {
       const body = req.body || {};
+      const platform = (body.platform || 'linkedin').toLowerCase();
       const query = body.query || 'Angular Developer';
       const location = body.location || 'India';
       const pages = body.pages ? body.pages.toString() : '3';
       const workTypes = body.workTypes || '2,3';
       const timePosted = body.timePosted || 'r86400';
 
-      const scanArgs = ['linkedin-scan', '--query', query, '--location', location, '--pages', pages];
-      if (workTypes) scanArgs.push('--work-types', workTypes);
-      if (timePosted) scanArgs.push('-t', timePosted);
+      let scanArgs: string[] = [];
 
-      res.json({ message: `🔍 Step 1: LinkedIn Job Scan launched for "${query}" (${location})!` });
+      if (platform === 'naukri') {
+        scanArgs = ['naukri-scan', '--query', query, '--location', location, '--pages', pages];
+        res.json({ message: `🔍 Step 1: Naukri.com Job Scan launched for "${query}" (${location})!` });
+      } else if (platform === 'indeed') {
+        scanArgs = ['indeed-scan', '--query', query, '--location', location, '--pages', pages];
+        res.json({ message: `🔍 Step 1: Indeed Job Scan launched for "${query}" (${location})!` });
+      } else {
+        scanArgs = ['linkedin-scan', '--query', query, '--location', location, '--pages', pages];
+        if (workTypes) scanArgs.push('--work-types', workTypes);
+        if (timePosted) scanArgs.push('-t', timePosted);
+        res.json({ message: `🔍 Step 1: LinkedIn Job Scan launched for "${query}" (${location})!` });
+      }
+
       await ensureChromeCdpRunning(9222);
       runCliCommand(scanArgs);
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated Naukri Scan endpoint
+  app.post('/api/scan/naukri', async (req, res) => {
+    try {
+      const body = req.body || {};
+      const query = body.query || 'Angular Developer';
+      const location = body.location || 'India';
+      const pages = body.pages ? body.pages.toString() : '3';
+      res.json({ message: `🔍 Step 1: Naukri.com Job Scan launched for "${query}" (${location})!` });
+      await ensureChromeCdpRunning(9222);
+      runCliCommand(['naukri-scan', '--query', query, '--location', location, '--pages', pages]);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
     }
@@ -441,21 +474,48 @@ export function startDashboardServer(port: number = 3000) {
   // Action 2: POST /api/evaluate
   app.post('/api/evaluate', (req, res) => {
     try {
-      res.json({ message: `⚡ Step 2: AI Job Evaluator launched!` });
+      res.json({ message: `⚡ Step 2: AI Job Evaluator launched (All Platforms)!` });
       runCliCommand(['evaluate']);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
     }
   });
 
-  // Action 3: POST /api/apply-all
+  // Action 3: POST /api/apply-all (Supports platform: linkedin | indeed | naukri)
   app.post('/api/apply-all', async (req, res) => {
     try {
       const body = req.body || {};
+      const platform = (body.platform || 'linkedin').toLowerCase();
       const minScore = body.minScore || '2.5';
-      res.json({ message: `🤖 Step 3: AI Easy Apply Auto-Apply launched!` });
+
+      let applyArgs: string[] = [];
+
+      if (platform === 'naukri') {
+        applyArgs = ['naukri-apply', '--min-score', minScore, '--auto'];
+        res.json({ message: `🤖 Step 3: Naukri.com AI Chatbot Auto-Apply launched!` });
+      } else if (platform === 'indeed') {
+        applyArgs = ['indeed-apply', '--min-score', minScore, '--auto'];
+        res.json({ message: `🤖 Step 3: Indeed Easily Apply Auto-Apply launched!` });
+      } else {
+        applyArgs = ['linkedin-apply', '--min-score', minScore, '--auto'];
+        res.json({ message: `🤖 Step 3: LinkedIn Easy Apply Auto-Apply launched!` });
+      }
+
       await ensureChromeCdpRunning(9222);
-      runCliCommand(['linkedin-apply', '--min-score', minScore, '--auto']);
+      runCliCommand(applyArgs);
+    } catch (err: any) {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated Naukri Apply endpoint
+  app.post('/api/apply/naukri', async (req, res) => {
+    try {
+      const body = req.body || {};
+      const minScore = body.minScore || '2.5';
+      res.json({ message: `🤖 Step 3: Naukri.com AI Chatbot Auto-Apply launched!` });
+      await ensureChromeCdpRunning(9222);
+      runCliCommand(['naukri-apply', '--min-score', minScore, '--auto']);
     } catch (err: any) {
       if (!res.headersSent) res.status(500).json({ error: err.message });
     }

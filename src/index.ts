@@ -4,9 +4,11 @@ import path from 'path';
 import fs from 'fs';
 import { scanLinkedInJobs } from './scraper/linkedin-scanner';
 import { scanIndeedJobs } from './scraper/indeed-scanner';
+import { scanNaukriJobs } from './scraper/naukri-scanner';
 import { evaluateJobs } from './engine/evaluator';
 import { applyLinkedInJob } from './engine/linkedin-apply';
 import { applyIndeedJob } from './engine/indeed-apply';
+import { applyNaukriJob } from './engine/naukri-apply';
 import { getUnappliedJobs, getDb } from './db/schema';
 import { CONFIG } from './config';
 
@@ -14,7 +16,7 @@ const program = new Command();
 
 program
   .name('jobops')
-  .description('JobOps CLI - LinkedIn Easy Apply AI Automation Engine')
+  .description('JobOps CLI - LinkedIn, Indeed & Naukri.com Multi-Platform AI Job Automation Engine')
   .version('1.0.0');
 
 // Command 1: launch-chrome
@@ -24,7 +26,7 @@ program
   .action(() => {
     console.log(`\n🚀 Launching Google Chrome with remote debugging port 9222...`);
     console.log(`📌 Chrome Path: ${CONFIG.chromeExecutablePath}`);
-    console.log(`💡 Once Chrome opens, log into LinkedIn, then run linkedin-apply!\n`);
+    console.log(`💡 Once Chrome opens, log into LinkedIn, Indeed & Naukri.com, then run your apply commands!\n`);
 
     const chromeProcess = spawn(CONFIG.chromeExecutablePath, [
       '--remote-debugging-port=9222',
@@ -76,10 +78,27 @@ program
     });
   });
 
+// Command 2c: naukri-scan
+program
+  .command('naukri-scan')
+  .description('Scan jobs from Naukri.com (India Remote, Hybrid & In-Office Focus)')
+  .option('-q, --query <text>', 'Job title / skills query', 'Angular Developer')
+  .option('-l, --location <city>', 'Job location', 'India')
+  .option('-p, --pages <number>', 'Number of pages to scan', '3')
+  .option('--headed', 'Run browser in visible headed mode', false)
+  .action(async (options) => {
+    await scanNaukriJobs({
+      query: options.query,
+      location: options.location,
+      maxPages: parseInt(options.pages, 10),
+      headless: !options.headed
+    });
+  });
+
 // Command 3: evaluate
 program
   .command('evaluate')
-  .description('Evaluate scanned LinkedIn jobs instantly against candidate skills')
+  .description('Evaluate all scanned jobs (LinkedIn, Indeed & Naukri) against candidate skills')
   .action(() => {
     evaluateJobs();
   });
@@ -224,25 +243,114 @@ program
     console.log(`\n✨ Queue Complete! Processed ${appliedCount + skippedCount} Indeed jobs (${appliedCount} applied/already applied, ${skippedCount} skipped/failed).`);
   });
 
+// Command 4c: naukri-apply
+program
+  .command('naukri-apply')
+  .description('Apply to top evaluated Naukri.com jobs with AI Chatbot Form Solver')
+  .option('--id <externalJobId>', 'Specific Naukri Job ID to apply')
+  .option('--min-score <score>', 'Minimum threshold score (0.0 - 5.0)', CONFIG.minScoreThreshold.toString())
+  .option('--auto', 'Run in 100% automatic hands-free mode without confirmation prompt', false)
+  .option('--limit <n>', 'Max applications per session', '25')
+  .action(async (options) => {
+    const minScore = parseFloat(options.minScore);
+    const sessionLimit = parseInt(options.limit, 10);
+    const db = getDb();
+
+    let jobsToApply: any[] = [];
+    if (options.id) {
+      jobsToApply = db.prepare(`SELECT * FROM jobs WHERE external_job_id = ?`).all(options.id);
+    } else {
+      jobsToApply = getUnappliedJobs('naukri', minScore);
+    }
+
+    if (jobsToApply.length === 0) {
+      console.log(`⚠️ No unapplied Naukri jobs found matching criteria (Min Score: ${minScore}). Run naukri-scan & evaluate first.`);
+      return;
+    }
+
+    if (jobsToApply.length > sessionLimit) {
+      console.log(`⚠️ [Safety Cap] ${jobsToApply.length} jobs queued. Limiting to ${sessionLimit} applications this session.`);
+      jobsToApply = jobsToApply.slice(0, sessionLimit);
+    }
+
+    console.log(`📋 Found ${jobsToApply.length} Naukri job(s) ready for application (Auto Mode: ${options.auto ? 'ENABLED ⚡' : 'DISABLED ✋'}).\n`);
+    let appliedCount = 0;
+    let skippedCount = 0;
+
+    const { chromium } = require('playwright');
+    let browserContext: any = null;
+    try {
+      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
+      browserContext = browser.contexts()[0] || await browser.newContext();
+    } catch {
+      console.log(`⚠️ Chrome CDP connection port ${CONFIG.cdpPort} failed. Make sure Chrome is open.`);
+    }
+
+    for (let i = 0; i < jobsToApply.length; i++) {
+      const job: any = jobsToApply[i];
+      console.log(`--------------------------------------------------`);
+      console.log(`📌 Processing Naukri job [${i + 1}/${jobsToApply.length}]: "${job.title}" at ${job.company}`);
+
+      const result = await applyNaukriJob(job, { autoSubmit: options.auto, browserContext });
+
+      if (result === 'connection_error' || result === 'not_logged_in') {
+        console.log(`\n🛑 Aborting Naukri application queue due to browser session or login issue.`);
+        break;
+      }
+
+      if (result === 'limit_reached') {
+        console.log(`\n🛑 [Naukri Limit Reached] Application limit reached for today.`);
+        break;
+      }
+
+      if (result === 'applied' || result === 'already_applied') {
+        appliedCount++;
+      } else {
+        skippedCount++;
+      }
+
+      if (i < jobsToApply.length - 1) {
+        const interJobPause = 5000 + Math.floor(Math.random() * 8000);
+        console.log(`⏳ Waiting ${(interJobPause / 1000).toFixed(1)}s before next application...`);
+        await new Promise(r => setTimeout(r, interJobPause));
+      }
+    }
+
+    console.log(`\n✨ Queue Complete! Processed ${appliedCount + skippedCount} Naukri jobs (${appliedCount} applied/already applied, ${skippedCount} skipped/failed).`);
+  });
+
 // Command 5: status
 program
   .command('status')
-  .description('Display summary of tracked LinkedIn jobs and application history')
+  .description('Display summary of tracked jobs across platforms and application history')
   .action(() => {
     const db = getDb();
     const totalScanned = (db.prepare(`SELECT COUNT(*) as count FROM jobs`).get() as any).count;
     const totalApplied = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE status = 'applied'`).get() as any).count;
     const totalSkipped = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE status = 'skipped'`).get() as any).count;
 
+    const linkedinScanned = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'linkedin'`).get() as any).count;
+    const linkedinApplied = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'linkedin' AND status = 'applied'`).get() as any).count;
+
+    const indeedScanned = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'indeed'`).get() as any).count;
+    const indeedApplied = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'indeed' AND status = 'applied'`).get() as any).count;
+
+    const naukriScanned = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'naukri'`).get() as any).count;
+    const naukriApplied = (db.prepare(`SELECT COUNT(*) as count FROM jobs WHERE platform = 'naukri' AND status = 'applied'`).get() as any).count;
+
     console.log(`\n📊 [JobOps Automation Status Summary]`);
-    console.log(`- Total Scanned LinkedIn Jobs: ${totalScanned}`);
-    console.log(`- Applications Submitted: ${totalApplied}`);
-    console.log(`- Skipped / Pending: ${totalSkipped}`);
+    console.log(`- Total Scanned Jobs (All Platforms): ${totalScanned}`);
+    console.log(`- Total Applied: ${totalApplied}`);
+    console.log(`- Total Skipped / Pending: ${totalSkipped}`);
+    console.log(`\n🌐 Platform Breakdown:`);
+    console.log(`  • LinkedIn:   ${linkedinScanned} scanned, ${linkedinApplied} applied`);
+    console.log(`  • Indeed:     ${indeedScanned} scanned, ${indeedApplied} applied`);
+    console.log(`  • Naukri.com: ${naukriScanned} scanned, ${naukriApplied} applied`);
 
     const recentApplied = db.prepare(`SELECT * FROM jobs WHERE status = 'applied' ORDER BY applied_at DESC LIMIT 5`).all();
     if (recentApplied.length > 0) {
       console.log(`\n✅ Recently Applied:`);
-      recentApplied.forEach((j: any) => console.log(`  • ${j.title} @ ${j.company}`));
+      recentApplied.forEach((j: any) => console.log(`  • [${(j.platform || '').toUpperCase()}] ${j.title} @ ${j.company}`));
     }
   });
 

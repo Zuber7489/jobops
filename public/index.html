@@ -591,6 +591,21 @@
     .tag-applied { background: #000000; color: #FFFFFF; }
     .tag-skipped { background: #F4F4F5; color: var(--text-dim); }
 
+    .platform-tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .platform-naukri { background: #EEF2FF; color: #2563EB; border: 1px solid #BFDBFE; }
+    .platform-linkedin { background: #E0F2FE; color: #0284C7; border: 1px solid #BAE6FD; }
+    .platform-indeed { background: #F3E8FF; color: #7C3AED; border: 1px solid #E9D5FF; }
+
     /* Right Sidebar */
     .sidebar {
       display: flex;
@@ -1054,14 +1069,24 @@
       <div class="filter-header">
         <div class="filter-title">
           <i class="fa-solid fa-filter" style="color: #6366F1;"></i>
-          LinkedIn Job Search & Filter Customization
+          Multi-Platform Job Search & Automation Customization
         </div>
         <span class="status-badge" style="background: #EEF2FF; color: #4F46E5; font-size: 11px;">
-          <i class="fa-solid fa-sliders"></i> Customizable Controls
+          <i class="fa-solid fa-sliders"></i> Multi-Platform Controls
         </span>
       </div>
 
       <div class="filter-grid">
+        <!-- 0. Target Platform -->
+        <div class="filter-group">
+          <label><i class="fa-solid fa-layer-group"></i> Target Platform</label>
+          <select id="filter-platform" class="filter-control">
+            <option value="naukri" selected>🔵 Naukri.com (India Remote & Hybrid)</option>
+            <option value="linkedin">🔷 LinkedIn Easy Apply</option>
+            <option value="indeed">🟣 Indeed India</option>
+          </select>
+        </div>
+
         <!-- 1. Job Title Query -->
         <div class="filter-group">
           <label><i class="fa-solid fa-magnifying-glass"></i> Job Title / Query</label>
@@ -1230,7 +1255,9 @@
           <div class="tabs">
             <div class="tab active" onclick="setFilter('all', this)">All Jobs</div>
             <div class="tab" onclick="setFilter('top', this)">Top Matches</div>
-            <div class="tab" onclick="setFilter('scanned', this)">Scanned</div>
+            <div class="tab" onclick="setFilter('naukri', this)"><i class="fa-solid fa-briefcase" style="color: #2563EB;"></i> Naukri</div>
+            <div class="tab" onclick="setFilter('linkedin', this)"><i class="fa-brands fa-linkedin" style="color: #0284C7;"></i> LinkedIn</div>
+            <div class="tab" onclick="setFilter('indeed', this)"><i class="fa-solid fa-circle-info" style="color: #7C3AED;"></i> Indeed</div>
             <div class="tab" onclick="setFilter('applied', this)">Applied</div>
           </div>
         </div>
@@ -1623,6 +1650,9 @@
         if (currentFilter === 'top') return (j.score || 0) >= 2.5;
         if (currentFilter === 'scanned') return j.status === 'scanned';
         if (currentFilter === 'applied') return j.status === 'applied';
+        if (currentFilter === 'naukri') return (j.platform || '').toLowerCase() === 'naukri';
+        if (currentFilter === 'linkedin') return (j.platform || '').toLowerCase() === 'linkedin';
+        if (currentFilter === 'indeed') return (j.platform || '').toLowerCase() === 'indeed';
         return true;
       });
 
@@ -1648,6 +1678,9 @@
         if (score >= 3.5) scoreClass = 'score-high';
         else if (score >= 2.5) scoreClass = 'score-med';
 
+        const platform = (j.platform || 'linkedin').toLowerCase();
+        const platformIcon = platform === 'naukri' ? 'fa-solid fa-briefcase' : (platform === 'indeed' ? 'fa-solid fa-circle-info' : 'fa-brands fa-linkedin');
+
         return `
           <div class="job-card">
             <div class="job-main">
@@ -1659,6 +1692,7 @@
                 <div class="job-meta">
                   <span><i class="fa-solid fa-building"></i> ${j.company}</span>
                   <span><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
+                  <span class="platform-tag platform-${platform}"><i class="${platformIcon}"></i> ${platform.toUpperCase()}</span>
                   <span class="status-tag tag-${j.status}">${j.status}</span>
                 </div>
                 ${j.evaluation_reason ? `<div class="job-reason">${j.evaluation_reason}</div>` : ''}
@@ -1666,7 +1700,7 @@
             </div>
 
             <div class="job-actions">
-              <a href="${j.url}" target="_blank" class="btn-icon" title="View Job on LinkedIn">
+              <a href="${j.url}" target="_blank" class="btn-icon" title="View Job on ${platform.toUpperCase()}">
                 <i class="fa-solid fa-up-right-from-square"></i>
               </a>
               <button class="btn-icon" onclick="deleteJob(${j.id})" title="Delete Job">
@@ -1833,6 +1867,7 @@
     }
 
     function getScanPayload() {
+      const platform = document.getElementById('filter-platform')?.value || 'naukri';
       const query = document.getElementById('filter-query')?.value.trim() || 'Angular Developer';
       const locSelect = document.getElementById('filter-location-select')?.value;
       const locCustom = document.getElementById('filter-location-custom')?.value.trim();
@@ -1843,7 +1878,7 @@
       const pages = document.getElementById('filter-pages')?.value || '3';
       const minScore = document.getElementById('filter-min-score')?.value || '2.5';
 
-      return { query, location, timePosted, workTypes, pages, minScore };
+      return { platform, query, location, timePosted, workTypes, pages, minScore };
     }
 
     function triggerScan() {
@@ -1855,8 +1890,9 @@
     }
 
     function triggerApply() {
+      const platform = document.getElementById('filter-platform')?.value || 'naukri';
       const minScore = document.getElementById('filter-min-score')?.value || '2.5';
-      runAction('/api/apply-all', { minScore });
+      runAction('/api/apply-all', { platform, minScore });
     }
 
     async function runAction(endpoint, payload = {}) {
