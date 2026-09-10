@@ -368,21 +368,7 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
       return 'not_logged_in';
     }
 
-    // 2. Check if already applied
-    const alreadyApplied = await page.evaluate(() => {
-      const container = document.querySelector('[class*="apply-button-container"]');
-      const text = (container as HTMLElement)?.innerText || container?.textContent || '';
-      const appliedEl = document.querySelector('.already-applied, [class*="alreadyApplied"], a[href*="myapply"]');
-      return /applied/i.test(text.trim()) || !!appliedEl;
-    });
-
-    if (alreadyApplied) {
-      console.log(`ℹ️ Job "${job.title}" at ${job.company} is already applied on Naukri.`);
-      updateJobStatus(job.external_job_id, 'applied');
-      return 'already_applied';
-    }
-
-    // 3. Check for external company site apply button
+    // 2. Check for external company site apply button FIRST (to skip external redirects immediately)
     const isExternalSite = await page.evaluate(() => {
       const compSiteBtn = document.querySelector('#company-site-button, [class*="company-site"], a[class*="company-site"]');
       const container = document.querySelector('[class*="apply-button-container"]');
@@ -391,9 +377,26 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
     });
 
     if (isExternalSite) {
-      console.log(`⏩ External company site redirect detected. Skipping external application.`);
+      console.log(`⏩ [External Company Site]: "${job.title}" at ${job.company} redirects to third-party portal ("Apply on company site"). Skipping.`);
       updateJobStatus(job.external_job_id, 'skipped');
       return 'skipped';
+    }
+
+    // 3. Check if already applied (strictly scoped inside the job action container, NOT global navbar)
+    const alreadyApplied = await page.evaluate(() => {
+      const container = document.querySelector('[class*="apply-button-container"]');
+      if (!container) return false;
+      const text = ((container as HTMLElement)?.innerText || container?.textContent || '').trim();
+      const innerAppliedBadge = container.querySelector('.already-applied, [class*="alreadyApplied"]');
+      
+      // Container text must explicitly be "Applied" or "Already Applied", not "Apply" or "Apply on company site"
+      return /^applied$/i.test(text) || /^already applied$/i.test(text) || !!innerAppliedBadge;
+    });
+
+    if (alreadyApplied) {
+      console.log(`ℹ️ Job "${job.title}" at ${job.company} is already applied on Naukri.`);
+      updateJobStatus(job.external_job_id, 'applied');
+      return 'already_applied';
     }
 
     // 4. Locate visible direct Apply button

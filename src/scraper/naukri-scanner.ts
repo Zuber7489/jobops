@@ -64,6 +64,24 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
 
     page.setDefaultTimeout(15000);
 
+    // Map to store job details from Naukri's background search API
+    const apiJobsMap = new Map<string, any>();
+
+    page.on('response', async (res) => {
+      if (res.url().includes('/jobapi/v3/search')) {
+        try {
+          const json = await res.json();
+          if (json.jobDetails && Array.isArray(json.jobDetails)) {
+            for (const item of json.jobDetails) {
+              if (item.jobId) {
+                apiJobsMap.set(item.jobId.toString(), item);
+              }
+            }
+          }
+        } catch {}
+      }
+    });
+
     const profile = loadProfile();
     const blacklisted = profile.blacklistedCompanies || [];
 
@@ -73,7 +91,7 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
       console.log(`🌐 Navigating to Naukri Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(3500);
       await page.mouse.wheel(0, 400).catch(() => null);
       await page.waitForTimeout(1500);
 
@@ -81,7 +99,7 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
       const jobCards = page.locator('.srp-jobtuple-wrapper, article.jobTuple, div.cust-job-tuple, div[data-job-id]');
       const count = await jobCards.count();
 
-      console.log(`📌 Found ${count} job cards on Naukri Page ${pageNum + 1}`);
+      console.log(`📌 Found ${count} job cards on Naukri Page ${pageNum + 1} (${apiJobsMap.size} API metadata cached)`);
 
       if (count === 0) {
         console.log('⚠️ No job cards found on this page or end of results reached.');
@@ -89,6 +107,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
       }
 
       let savedCount = 0;
+      let externalCount = 0;
+
       for (let i = 0; i < count; i++) {
         try {
           const card = jobCards.nth(i);
@@ -131,12 +151,14 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
 
           const fullUrl = url.startsWith('http') ? url : `https://www.naukri.com${url}`;
 
-          // Detect apply type
-          const cardText = (await card.textContent().catch(() => '')) || '';
-          const isExternal = /apply on company site|company site/i.test(cardText);
+          // Accurate detection from Naukri search API: companyApplyJob === true means external redirect!
+          const apiJob = apiJobsMap.get(rawId);
+          const isExternal = apiJob ? (apiJob.companyApplyJob === true || !!apiJob.applyRedirectUrl) : false;
           const applyType = isExternal ? 'external' : 'easy-apply';
 
           const isBlacklisted = blacklisted.some(b => company.toLowerCase().includes(b.toLowerCase()));
+          const status = isBlacklisted ? 'skipped' : (isExternal ? 'skipped' : 'scanned');
+          const reason = isBlacklisted ? 'Blacklisted company' : (isExternal ? 'External Company Site Redirect (Skipped)' : '');
 
           const jdSummary = [
             `Naukri Job: ${title} at ${company}`,
@@ -156,15 +178,18 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
             jd_text: jdSummary,
             apply_type: applyType,
             score: 0.0,
-            evaluation_reason: isBlacklisted ? 'Blacklisted company' : '',
-            status: isBlacklisted ? 'skipped' : 'scanned'
+            evaluation_reason: reason,
+            status: status
           };
 
           saveJobRecord(jobRecord);
-          if (!isBlacklisted) {
+          if (status === 'scanned') {
             scrapedJobs.push(jobRecord as JobRecord);
             savedCount++;
-          } else {
+            console.log(`✨ [Direct Easy Apply Found]: "${title}" at ${company}`);
+          } else if (isExternal) {
+            externalCount++;
+          } else if (isBlacklisted) {
             console.log(`🚫 [Blacklisted Company Skipped]: "${title}" at ${company}`);
           }
         } catch {
@@ -172,7 +197,7 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
         }
       }
 
-      console.log(`✅ Saved ${savedCount} confirmed jobs from Naukri Page ${pageNum + 1}`);
+      console.log(`✅ Naukri Page ${pageNum + 1}: ${savedCount} direct Easy Apply jobs queued (${externalCount} external redirects skipped)`);
 
       // Small delay between pages
       if (pageNum < maxPages - 1) {
