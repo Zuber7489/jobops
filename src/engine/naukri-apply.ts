@@ -130,6 +130,17 @@ function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: st
     return profile.location || 'Indore';
   }
 
+  // 8. Interview / Availability / Relocation
+  if (/interview|available|virtual.*interview|attend.*interview/i.test(lowerLabel)) {
+    return 'Yes';
+  }
+  if (/relocate|relocation/i.test(lowerLabel)) {
+    return 'Yes';
+  }
+  if (/work from office|hybrid|onsite|wfo/i.test(lowerLabel)) {
+    return 'Yes';
+  }
+
   // Strip non-digit characters if numeric field
   if (inputType === 'number' || /years|yoe|months|days/i.test(lowerLabel)) {
     const digitsOnly = answer.replace(/[^\d.]/g, '');
@@ -192,49 +203,46 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
     console.log(`❓ [Naukri Chatbot Q${turn}]: "${currentQuestion}"`);
 
     // A. Check for Quick Reply Chips / Options (e.g. Notice period choices, Yes/No, Salary chips)
-    const chips = drawer.locator('.chipMsg, .chip, [class*="chip"], .option, [role="button"][class*="chip"]');
-    const chipCount = await chips.count();
+    // Only inspect elements with actual visible non-empty text (not empty container divs)
+    const chipLocators = drawer.locator('.chipMsg, .chipItem, .chips-item, button.chip, [role="button"].chip, .option, li[class*="chip"], [class*="chip"] span, [class*="chip"] div, button');
+    const totalChips = await chipLocators.count();
+    const validChips: { locator: any; text: string }[] = [];
 
-    if (chipCount > 0) {
-      let clickedChip = false;
-      const chipTexts: string[] = [];
-
-      for (let c = 0; c < chipCount; c++) {
-        const cText = (await chips.nth(c).textContent().catch(() => ''))?.trim() || '';
-        chipTexts.push(cText);
+    for (let c = 0; c < totalChips; c++) {
+      const loc = chipLocators.nth(c);
+      const isVis = await loc.isVisible().catch(() => false);
+      const cText = (await loc.textContent().catch(() => ''))?.trim() || '';
+      // Only keep actual clickable chips with 1-60 characters of text
+      if (isVis && cText.length > 0 && cText.length < 60 && !/save|send|close|submit/i.test(cText) && !validChips.some(v => v.text.toLowerCase() === cText.toLowerCase())) {
+        validChips.push({ locator: loc, text: cText });
       }
+    }
 
-      console.log(`💡 [Naukri Chatbot] Found ${chipCount} chip options: [${chipTexts.join(', ')}]`);
+    if (validChips.length > 0) {
+      console.log(`💡 [Naukri Chatbot] Found ${validChips.length} chip options: [${validChips.map(v => v.text).join(', ')}]`);
 
-      // Determine best chip using heuristics and Gemini
-      let targetChipIndex = 0;
+      let chosen = validChips[0];
       const qLower = currentQuestion.toLowerCase();
 
       if (/notice/i.test(qLower)) {
-        // Prefer shortest notice period chip e.g. "15 Days or less", "Immediate", "15 Days"
-        const noticeIdx = chipTexts.findIndex(t => /15\s*day|immediate|serving|1\s*month/i.test(t));
-        if (noticeIdx !== -1) targetChipIndex = noticeIdx;
-      } else if (/yes|no/i.test(chipTexts.join(' '))) {
-        // For work auth, legally allowed, etc. prefer "Yes"
-        const yesIdx = chipTexts.findIndex(t => /^yes$/i.test(t) || /yes/i.test(t));
-        if (yesIdx !== -1) targetChipIndex = yesIdx;
+        const noticeMatch = validChips.find(v => /15\s*day|immediate|serving|1\s*month/i.test(v.text));
+        if (noticeMatch) chosen = noticeMatch;
+      } else if (/interview|available|agree|authorized|relocate/i.test(qLower) || validChips.some(v => /^yes$/i.test(v.text))) {
+        // For interview availability or yes/no questions, ALWAYS select "Yes"
+        const yesMatch = validChips.find(v => /^yes/i.test(v.text) || /available/i.test(v.text));
+        if (yesMatch) chosen = yesMatch;
       } else {
-        // Use Gemini to choose best option
-        const prompt = `Question: "${currentQuestion}". Options: [${chipTexts.join(', ')}]. Candidate has 2.5 years experience in Angular/TypeScript, notice period 15 days, Current CTC 3.2 LPA, Expected CTC 6.5 LPA, Indore. Return only the exact matching option text.`;
+        const optionsList = validChips.map(v => v.text).join(', ');
+        const prompt = `Question: "${currentQuestion}". Options: [${optionsList}]. Candidate: Mohammad Zuber, 2.5 YOE Angular/TS, notice 15 days, CTC 3.2, ECTC 6.5, Indore. Return only the best matching option text from the list.`;
         const aiChosen = (await answerQuestionWithGemini(prompt, job.title)).trim();
-        const foundIdx = chipTexts.findIndex(t => t.toLowerCase() === aiChosen.toLowerCase() || t.toLowerCase().includes(aiChosen.toLowerCase()));
-        if (foundIdx !== -1) targetChipIndex = foundIdx;
+        const found = validChips.find(v => v.text.toLowerCase().includes(aiChosen.toLowerCase()) || aiChosen.toLowerCase().includes(v.text.toLowerCase()));
+        if (found) chosen = found;
       }
 
-      const targetChip = chips.nth(targetChipIndex);
-      if (await targetChip.isVisible().catch(() => false)) {
-        console.log(`👆 Clicking chip option: "${chipTexts[targetChipIndex]}"`);
-        await targetChip.click().catch(() => null);
-        await page.waitForTimeout(1500);
-        clickedChip = true;
-      }
-
-      if (clickedChip) continue;
+      console.log(`👆 Clicking chip option: "${chosen.text}"`);
+      await chosen.locator.click().catch(() => null);
+      await page.waitForTimeout(2000);
+      continue;
     }
 
     // B. Check for ContentEditable / Text Input Area
@@ -266,11 +274,14 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
 
       await page.waitForTimeout(600);
 
-      // Click Send / Save button
+      // Click Send / Save button or press Enter
       const sendBtn = drawer.locator('.sendMsg, .send, [class*="sendMsg"], button:has-text("Save"), button:has-text("Send"), [tabindex="0"]:has-text("Save")').first();
       if (await sendBtn.isVisible().catch(() => false)) {
         console.log(`📤 Submitting answer...`);
         await sendBtn.click().catch(() => null);
+        await page.waitForTimeout(2000);
+      } else {
+        await page.keyboard.press('Enter').catch(() => null);
         await page.waitForTimeout(2000);
       }
       continue;
