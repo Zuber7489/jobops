@@ -9,6 +9,7 @@ currentCtcLpa: 3.2
 expectedCtcLpa: 6.5
 noticePeriodDays: 1
 location: Indore, Madhya Pradesh
+dob: "15/08/2001"
 skills:
   - Angular
   - Angular SSR

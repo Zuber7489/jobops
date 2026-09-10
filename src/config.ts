@@ -20,6 +20,7 @@ export interface UserProfile {
   resumeUploadPath?: string; // Optional: Path to PDF resume for auto-upload on LinkedIn Easy Apply
   currentCompany?: string;
   linkedin?: string;
+  dob?: string; // Date of Birth e.g. "15/08/2001"
   blacklistedCompanies?: string[];
 }
 

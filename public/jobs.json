@@ -187,9 +187,9 @@
     "apply_type": "easy-apply",
     "score": 2.8,
     "evaluation_reason": "Matched: 2-3 YOE (exact match), angular, full stack, git",
-    "status": "evaluated",
+    "status": "applied",
     "scanned_at": "2026-09-10 15:44:46",
-    "applied_at": null
+    "applied_at": "2026-09-10 15:53:05"
   },
   {
     "id": 3471,
