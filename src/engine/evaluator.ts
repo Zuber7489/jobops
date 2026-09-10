@@ -74,6 +74,23 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       continue;
     }
 
+    // Freshness Guard: Skip stale jobs (30+ days old / 1+ month old)
+    const isStale = /30\+\s*days|30\+d\b|30\+\s*days\s*ago|1\s*month\s*ago|2\s*months\s*ago/i.test(textToMatch);
+    if (isStale) {
+      const skipReason = 'Stale job posting (30+ days old)';
+      db.prepare(`
+        UPDATE jobs 
+        SET score = 0.0, evaluation_reason = ?, status = 'skipped' 
+        WHERE external_job_id = ?
+      `).run(skipReason, job.external_job_id);
+
+      job.score = 0.0;
+      job.evaluation_reason = skipReason;
+      job.status = 'skipped';
+      console.log(`⏩ [Stale Job Skipped] Job #${job.id}: ${job.title} @ ${job.company} (${skipReason})`);
+      continue;
+    }
+
     // Direct check for unrelated/non-Angular roles in title
     const isUnrelatedRole = /backend|back-end|java|c\+\+|\.net|c#|python|django|flask|php|laravel|ruby|rails|golang|android|ios|flutter|react native|qa|testing|tester|data engineer|data scientist|devops|sharepoint|shopify|musician|annotation|mentor|sales|recruiter/i.test(titleLower);
 

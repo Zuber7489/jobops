@@ -22,7 +22,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
   const encodedQuery = encodeURIComponent(query);
   const encodedLocation = encodeURIComponent(location);
   const expParam = 2; // Target 2-3 YOE for candidate Mohammad Zuber (2.5 YOE)
-  const baseUrl = `https://www.naukri.com/${slug}?k=${encodedQuery}&l=${encodedLocation}&experience=${expParam}`;
+  const jobAgeDays = 7; // Only fresh jobs posted within the last 7 days!
+  const baseUrl = `https://www.naukri.com/${slug}?k=${encodedQuery}&l=${encodedLocation}&experience=${expParam}&jobAge=${jobAgeDays}`;
 
   let browserContext: BrowserContext | null = null;
   let standaloneBrowser: any = null;
@@ -87,8 +88,8 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
     const blacklisted = profile.blacklistedCompanies || [];
 
     for (let pageNum = 0; pageNum < maxPages; pageNum++) {
-      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2?experience=2`
-      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}?experience=${expParam}`;
+      // Page 1 is base URL; Page 2+ is `...-jobs-in-india-2?experience=2&jobAge=7`
+      const pageUrl = pageNum === 0 ? baseUrl : `https://www.naukri.com/${slug}-${pageNum + 1}?experience=${expParam}&jobAge=${jobAgeDays}`;
       console.log(`🌐 Navigating to Naukri Page ${pageNum + 1}: ${pageUrl}`);
 
       await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
@@ -168,6 +169,10 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
           const isOverExperienced = minExp >= 4; // Skip any job requiring 4+, 5+, 6+, 10+ years
           const isSeniorTitle = /\b(lead|principal|architect|director|staff|manager|team lead|head)\b/i.test(title);
 
+          // Freshness Check: Skip stale jobs (30+ Days Ago / 15+ Days Ago)
+          const postedLabel = apiJob?.footerPlaceholderLabel || '';
+          const isStale = /30\+|20\+|15\+/i.test(postedLabel);
+
           const isBlacklisted = blacklisted.some(b => company.toLowerCase().includes(b.toLowerCase()));
           
           let status: JobRecord['status'] = 'scanned';
@@ -185,10 +190,14 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
           } else if (isSeniorTitle) {
             status = 'skipped';
             reason = `Senior/Lead title mismatch: "${title}"`;
+          } else if (isStale) {
+            status = 'skipped';
+            reason = `Stale job posting: ${postedLabel || '30+ Days Old'}`;
           }
 
           const jdSummary = [
             `Naukri Job: ${title} at ${company}`,
+            postedLabel ? `Posted: ${postedLabel}` : '',
             expText ? `Experience: ${expText}` : '',
             salText ? `Salary: ${salText}` : '',
             locText ? `Location: ${locText}` : '',
@@ -213,7 +222,9 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
           if (status === 'scanned') {
             scrapedJobs.push(jobRecord as JobRecord);
             savedCount++;
-            console.log(`✨ [Direct Easy Apply Found]: "${title}" (${expText || '2-3 Yrs'}) at ${company}`);
+            console.log(`✨ [Direct Easy Apply Found]: "${title}" (${expText || '2-3 Yrs'}, ${postedLabel || 'Recent'}) at ${company}`);
+          } else if (isStale) {
+            console.log(`⏩ [Stale Job Skipped]: "${title}" (${postedLabel}) at ${company}`);
           } else if (isOverExperienced || isSeniorTitle) {
             console.log(`⏩ [Senior/Experience Mismatch Skipped]: "${title}" (${expText}) at ${company}`);
           } else if (isExternal) {

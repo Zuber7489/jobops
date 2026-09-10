@@ -379,6 +379,14 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
       return 'skipped';
     }
 
+    // 1c. Freshness Guard: Skip stale jobs (30+ days old)
+    const isStale = /30\+\s*days|1\s*month\s*ago|2\s*months\s*ago/i.test(combinedText);
+    if (isStale) {
+      console.log(`⏩ [Stale Job Skipped]: "${job.title}" at ${job.company} is 30+ days old. Skipping.`);
+      updateJobStatus(job.external_job_id, 'skipped');
+      return 'skipped';
+    }
+
     // 2. Check for external company site apply button FIRST (to skip external redirects immediately)
     const isExternalSite = await page.evaluate(() => {
       const compSiteBtn = document.querySelector('#company-site-button, [class*="company-site"], a[class*="company-site"]');
