@@ -50,24 +50,19 @@ export async function ensureChromeCdpRunning(port: number = 9222): Promise<boole
   console.log(`🚀 [Chrome Launcher] Opening visible Chrome browser on port ${port}...`);
 
   try {
-    if (chromePath) {
-      spawn(chromePath, [
+    await chromium.launchPersistentContext(userDataDir, {
+      headless: false,
+      channel: 'chrome',
+      args: [
         `--remote-debugging-port=${port}`,
-        `--user-data-dir=${userDataDir}`,
         '--no-first-run',
         '--no-default-browser-check',
-        '--start-maximized',
-        'https://www.linkedin.com'
-      ], { detached: true, stdio: 'ignore' }).unref();
-    } else {
-      await chromium.launchPersistentContext(userDataDir, {
-        headless: false,
-        args: [`--remote-debugging-port=${port}`, '--no-first-run', '--start-maximized'],
-        viewport: null
-      });
-    }
+        '--start-maximized'
+      ],
+      viewport: null
+    });
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       await new Promise(r => setTimeout(r, 500));
       if (await isChromeCdpRunning(port)) {
         console.log(`✅ [Chrome Launcher] Visible Chrome window active on port ${port}`);

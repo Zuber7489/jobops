@@ -172,6 +172,9 @@ export async function answerQuestionWithGemini(questionText: string, jobTitle: s
     if (qLower.includes('city') || qLower.includes('location') || qLower.includes('address')) {
       return profile.location || 'Indore, Madhya Pradesh';
     }
+    if (/date\s*of\s*birth|dob|d\.o\.b|birth\s*date|birthdate/i.test(qLower)) {
+      return profile.dob || '15/08/2001';
+    }
 
     // Combined Current CTC and Expected CTC in one question (e.g. "What is your CTC and ECTC ?")
     if ((qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('compensation')) && (qLower.includes('ectc') || (qLower.includes('current') && qLower.includes('expect')))) {
@@ -264,6 +267,7 @@ Candidate Core Profile:
 - Email: ${profile.email}
 - Phone: ${profile.phone}
 - Location: ${profile.location}
+- Date of Birth: ${profile.dob || '15/08/2001'}
 - Notice Period: ${profile.noticePeriodDays} day
 - Total Professional Experience: ${Math.floor(profile.totalYoe)} years
 - Relevant Angular/Frontend Experience: 2 years
@@ -293,7 +297,11 @@ Instructions & Response Rules:
         if (numOnly) aiAnswer = numOnly;
       }
 
-      console.log(`🤖 [Gemini AI Re-Solved Validation] "${questionText}" ➔ "${aiAnswer}"`);
+      if (validationError) {
+        console.log(`🤖 [Gemini AI Re-Solved Validation] "${questionText}" ➔ "${aiAnswer}"`);
+      } else {
+        console.log(`🤖 [Gemini AI Answer] "${questionText}" ➔ "${aiAnswer}"`);
+      }
     } catch (aiErr: any) {
       console.error(`⚠️ [Gemini AI Reasoning Note]: ${aiErr.message}`);
     }

@@ -12,6 +12,8 @@ import { applyNaukriJob } from './engine/naukri-apply';
 import { getUnappliedJobs, getDb } from './db/schema';
 import { CONFIG } from './config';
 
+import { chromium } from 'playwright';
+
 const program = new Command();
 
 program
@@ -23,21 +25,39 @@ program
 program
   .command('launch-chrome')
   .description('Launch Google Chrome with Remote Debugging port 9222 enabled for session reuse')
-  .action(() => {
-    console.log(`\n🚀 Launching Google Chrome with remote debugging port 9222...`);
-    console.log(`📌 Chrome Path: ${CONFIG.chromeExecutablePath}`);
-    console.log(`💡 Once Chrome opens, log into LinkedIn, Indeed & Naukri.com, then run your apply commands!\n`);
+  .action(async () => {
+    console.log(`\n🚀 Launching Google Chrome with Remote Debugging on port 9222...`);
+    console.log(`📌 Profile Directory: ${CONFIG.userDataDir}`);
+    console.log(`💡 Once Chrome opens, log into LinkedIn, Indeed & Naukri.com, then run your apply commands!`);
+    console.log(`📌 Keep this terminal open while using JobOps, or press Ctrl+C to close Chrome.\n`);
 
-    const chromeProcess = spawn(CONFIG.chromeExecutablePath, [
-      '--remote-debugging-port=9222',
-      `--user-data-dir=${CONFIG.userDataDir}`
-    ], {
-      detached: true,
-      stdio: 'ignore'
-    });
-    chromeProcess.unref();
+    try {
+      const context = await chromium.launchPersistentContext(CONFIG.userDataDir, {
+        headless: false,
+        channel: 'chrome',
+        args: [
+          '--remote-debugging-port=9222',
+          '--no-first-run',
+          '--no-default-browser-check',
+          '--start-maximized'
+        ],
+        viewport: null
+      });
 
-    console.log(`✅ Chrome launched successfully on port 9222.`);
+      const page = context.pages()[0] || await context.newPage();
+      await page.goto('https://www.naukri.com/mnjuser/homepage').catch(() => null);
+
+      console.log(`✅ Chrome is running with Remote Debugging on port 9222.`);
+      console.log(`🟢 Chrome window is open on your screen!`);
+
+      await new Promise((resolve) => {
+        context.on('close', () => resolve(null));
+      });
+      console.log(`👋 Chrome window closed.`);
+      process.exit(0);
+    } catch (err: any) {
+      console.error(`❌ Failed to launch Chrome: ${err.message}`);
+    }
   });
 
 // Command 2: linkedin-scan

@@ -6,6 +6,7 @@ import { exec } from 'child_process';
 import { CONFIG, loadProfile } from '../config';
 import { updateJobStatus, JobRecord } from '../db/schema';
 import { answerQuestionWithGemini } from './gemini';
+import { ensureChromeCdpRunning } from '../utils/chrome-launcher';
 
 export interface ApplyOptions {
   autoSubmit?: boolean;
@@ -141,6 +142,19 @@ function sanitizeInputAnswer(labelText: string, rawAnswer: string, inputType: st
     return 'Yes';
   }
 
+  // 9. Date of Birth (DOB)
+  if (/date.*birth|dob|d\.o\.b|birth.*date|birthdate/i.test(lowerLabel) || inputType === 'date') {
+    const rawDob = profile.dob || '15/08/2001';
+    if (inputType === 'date') {
+      const parts = rawDob.split(/[/\-.]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) return rawDob; // Already YYYY-MM-DD
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+    }
+    return rawDob;
+  }
+
   // Strip non-digit characters if numeric field
   if (inputType === 'number' || /years|yoe|months|days/i.test(lowerLabel)) {
     const digitsOnly = answer.replace(/[^\d.]/g, '');
@@ -178,16 +192,44 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
     }
 
     // Extract the latest bot question text
-    const botMessages = drawer.locator('.botMsg, .chat-msg, .botItem, .chatbot_ListItem div.msg');
+    const botMessages = drawer.locator([
+      '.botMsg', '.chat-msg', '.botItem', '.chatbot_ListItem',
+      '[class*="botMsg"]', '[class*="msgText"]', '[class*="botItem"]',
+      '[class*="bubble"]', '[class*="msgItem"]', '.msgContent',
+      '[class*="message"]', '.chatBubble', '.questionText', '.chat-item'
+    ].join(', '));
     const msgCount = await botMessages.count();
     let currentQuestion = '';
 
     for (let m = msgCount - 1; m >= 0; m--) {
       const txt = (await botMessages.nth(m).textContent().catch(() => ''))?.trim() || '';
-      if (txt && txt.length > 4 && !/naukri|beware|fraud|imposter/i.test(txt)) {
+      if (txt && txt.length >= 3 && !/naukri|beware|fraud|imposter|type message|save/i.test(txt)) {
         currentQuestion = txt;
         break;
       }
+    }
+
+    // Fallback: examine visible text inside drawer above input
+    if (!currentQuestion || currentQuestion === 'Please enter details to apply') {
+      const fallbackText = await drawer.evaluate((el: any) => {
+        const input = el.querySelector('input, textarea');
+        const nodes: string[] = [];
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        let node;
+        while ((node = walker.nextNode())) {
+          const txt = (node.textContent || '').trim();
+          if (txt && txt.length >= 3 && !/naukri|beware|fraud|save|send|type message/i.test(txt)) {
+            const parent = node.parentElement;
+            if (input && parent && (parent.compareDocumentPosition(input) & 4)) {
+              nodes.push(txt);
+            } else if (!input) {
+              nodes.push(txt);
+            }
+          }
+        }
+        return nodes.length > 0 ? nodes[nodes.length - 1] : '';
+      }).catch(() => '');
+      if (fallbackText) currentQuestion = fallbackText;
     }
 
     if (!currentQuestion) {
@@ -203,8 +245,7 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
     console.log(`❓ [Naukri Chatbot Q${turn}]: "${currentQuestion}"`);
 
     // A. Check for Quick Reply Chips / Options (e.g. Notice period choices, Yes/No, Salary chips)
-    // Only inspect elements with actual visible non-empty text (not empty container divs)
-    const chipLocators = drawer.locator('.chipMsg, .chipItem, .chips-item, button.chip, [role="button"].chip, .option, li[class*="chip"], [class*="chip"] span, [class*="chip"] div, button');
+    const chipLocators = drawer.locator('.chipMsg, .chipItem, .chips-item, button[class*="chip"], [role="button"][class*="chip"], li[class*="chip"], .option, [class*="chipOption"]');
     const totalChips = await chipLocators.count();
     const validChips: { locator: any; text: string }[] = [];
 
@@ -212,8 +253,8 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
       const loc = chipLocators.nth(c);
       const isVis = await loc.isVisible().catch(() => false);
       const cText = (await loc.textContent().catch(() => ''))?.trim() || '';
-      // Only keep actual clickable chips with 1-60 characters of text
-      if (isVis && cText.length > 0 && cText.length < 60 && !/save|send|close|submit/i.test(cText) && !validChips.some(v => v.text.toLowerCase() === cText.toLowerCase())) {
+      // Only keep actual clickable chips (reject action buttons like Save, Send, Close)
+      if (isVis && cText.length > 0 && cText.length < 50 && !/^(save|send|close|submit|done|x|✕|×)$/i.test(cText) && !validChips.some(v => v.text.toLowerCase() === cText.toLowerCase())) {
         validChips.push({ locator: loc, text: cText });
       }
     }
@@ -224,11 +265,18 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
       let chosen = validChips[0];
       const qLower = currentQuestion.toLowerCase();
 
-      if (/notice/i.test(qLower)) {
+      if (/career break|gap/i.test(qLower)) {
+        // Candidate is NOT on a career break (currently employed at Growhut Technologies)
+        const noMatch = validChips.find(v => /^no$/i.test(v.text));
+        if (noMatch) chosen = noMatch;
+      } else if (/visa|sponsorship|criminal/i.test(qLower)) {
+        const noMatch = validChips.find(v => /^no$/i.test(v.text));
+        if (noMatch) chosen = noMatch;
+      } else if (/notice/i.test(qLower)) {
         const noticeMatch = validChips.find(v => /15\s*day|immediate|serving|1\s*month/i.test(v.text));
         if (noticeMatch) chosen = noticeMatch;
-      } else if (/interview|available|agree|authorized|relocate/i.test(qLower) || validChips.some(v => /^yes$/i.test(v.text))) {
-        // For interview availability or yes/no questions, ALWAYS select "Yes"
+      } else if (/interview|available|agree|authorized|relocate|full.*time|shift/i.test(qLower)) {
+        // For interview availability or agreement questions, select "Yes"
         const yesMatch = validChips.find(v => /^yes/i.test(v.text) || /available/i.test(v.text));
         if (yesMatch) chosen = yesMatch;
       } else {
@@ -246,16 +294,28 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
     }
 
     // B. Check for ContentEditable / Text Input Area
-    const inputArea = drawer.locator('.textArea[contenteditable="true"], div[contenteditable="true"], textarea, input:not([type="hidden"]):not([type="file"])').first();
+    const inputArea = drawer.locator([
+      'input[placeholder*="Type message"]',
+      'textarea[placeholder*="Type message"]',
+      'input[type="text"]',
+      'input[type="date"]',
+      'input[type="number"]',
+      '.textArea[contenteditable="true"]',
+      'div[contenteditable="true"]',
+      'textarea',
+      'input:not([type="hidden"]):not([type="file"])'
+    ].join(', ')).first();
+
     if (await inputArea.isVisible().catch(() => false)) {
+      const inputType = (await inputArea.getAttribute('type').catch(() => 'text')) || 'text';
       let aiAnswer = await answerQuestionWithGemini(currentQuestion, job.title);
-      aiAnswer = sanitizeInputAnswer(currentQuestion, aiAnswer, '');
+      aiAnswer = sanitizeInputAnswer(currentQuestion, aiAnswer, inputType);
 
-      console.log(`💬 Typing answer: "${aiAnswer}"`);
+      console.log(`🤖 [Gemini AI Answer] "${currentQuestion}" ➔ "${aiAnswer}"`);
       await inputArea.click().catch(() => null);
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200);
 
-      // Support contenteditable div
+      // Support contenteditable div or standard input
       const isContentEditable = await inputArea.evaluate((el: any) => el.isContentEditable).catch(() => false);
       if (isContentEditable) {
         await inputArea.evaluate((el: any, text: string) => {
@@ -263,27 +323,56 @@ async function solveChatbotQuestions(page: Page, job: JobRecord, profile: Return
           el.dispatchEvent(new Event('input', { bubbles: true }));
           el.dispatchEvent(new Event('change', { bubbles: true }));
         }, aiAnswer);
-        // Also trigger keystrokes to ensure Naukri's state detects text
         await page.keyboard.press('End');
         await page.keyboard.type(' ');
         await page.keyboard.press('Backspace');
       } else {
+        // Clear input cleanly first
         await inputArea.fill('').catch(() => null);
-        await inputArea.pressSequentially(aiAnswer, { delay: 30 }).catch(() => null);
+        await page.keyboard.press('Control+A').catch(() => null);
+        await page.keyboard.press('Backspace').catch(() => null);
+
+        // Fill value via Playwright
+        await inputArea.fill(aiAnswer).catch(() => null);
+
+        // Dispatch synthetic events so React/Angular reactive forms update their models
+        await inputArea.evaluate((el: any, val: string) => {
+          el.value = val;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          el.dispatchEvent(new Event('blur', { bubbles: true }));
+        }, aiAnswer).catch(() => null);
       }
 
-      await page.waitForTimeout(600);
+      await page.waitForTimeout(500);
 
       // Click Send / Save button or press Enter
-      const sendBtn = drawer.locator('.sendMsg, .send, [class*="sendMsg"], button:has-text("Save"), button:has-text("Send"), [tabindex="0"]:has-text("Save")').first();
+      const sendBtn = drawer.locator([
+        'button:has-text("Save")',
+        'button:has-text("Send")',
+        'button:has-text("Submit")',
+        '.sendMsg',
+        '.send',
+        '[class*="sendMsg"]',
+        'button[class*="save"]',
+        'button[class*="primary"]',
+        '[role="button"]:has-text("Save")'
+      ].join(', ')).first();
+
       if (await sendBtn.isVisible().catch(() => false)) {
-        console.log(`📤 Submitting answer...`);
-        await sendBtn.click().catch(() => null);
-        await page.waitForTimeout(2000);
-      } else {
-        await page.keyboard.press('Enter').catch(() => null);
-        await page.waitForTimeout(2000);
+        console.log(`📤 Submitting answer via Save/Send button...`);
+        await page.waitForTimeout(300);
+        try {
+          await sendBtn.click({ timeout: 2000 });
+        } catch {
+          await sendBtn.evaluate((el: any) => el.click()).catch(() => null);
+        }
+        await page.waitForTimeout(1500);
       }
+      
+      // Also press Enter as guaranteed submission
+      await page.keyboard.press('Enter').catch(() => null);
+      await page.waitForTimeout(1500);
       continue;
     }
 
@@ -338,6 +427,7 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
     // Connect to active Chrome session
     if (!browserContext) {
       try {
+        await ensureChromeCdpRunning(CONFIG.cdpPort);
         const browser = await chromium.connectOverCDP(`http://127.0.0.1:${CONFIG.cdpPort}`);
         browserContext = browser.contexts()[0] || await browser.newContext();
         page = await browserContext.newPage();
