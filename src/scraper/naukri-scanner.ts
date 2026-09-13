@@ -175,12 +175,23 @@ export async function scanNaukriJobs(options: NaukriScanOptions): Promise<JobRec
 
           const isBlacklisted = blacklisted.some(b => company.toLowerCase().includes(b.toLowerCase()));
           
+          const titleLower = title.toLowerCase();
+          const isForbiddenTech = /(^|\W)(java|spring|springboot|hibernate|j2ee|react|reactjs|react\.js|react-native|\.?net|dotnet|c#|asp\.net|python|django|flask|fastapi|php|laravel|codeigniter|wordpress|ruby|rails|golang|c\+\+|embedded|full\s*stack|fullstack|mean\s*stack|mern\s*stack|backend|back-end|qa|testing|tester|test engineer|devops|cloud|salesforce|servicenow|sharepoint|android|ios|flutter|data engineer|data scientist|musician|annotation|mentor|sales|recruiter)(\W|$)/i.test(titleLower);
+
+          const isAngularRole = /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
+            (/(^|\W)(frontend|front-end|ui)\s*(developer|engineer|consultant|specialist|programmer|web developer)(\W|$)/i.test(titleLower) && !isForbiddenTech);
+
           let status: JobRecord['status'] = 'scanned';
           let reason = '';
 
           if (isBlacklisted) {
             status = 'skipped';
             reason = 'Blacklisted company';
+          } else if (isForbiddenTech || !isAngularRole) {
+            status = 'skipped';
+            reason = isForbiddenTech 
+              ? `Non-Angular tech in title: "${title}" (Disqualified)`
+              : `Non-Angular role: "${title}" (Candidate strictly targets Angular/Frontend)`;
           } else if (isExternal) {
             status = 'skipped';
             reason = 'External Company Site Redirect (Skipped)';

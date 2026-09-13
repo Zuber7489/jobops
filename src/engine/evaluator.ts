@@ -12,7 +12,7 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
     : `WHERE status = 'scanned' AND (apply_type IS NULL OR apply_type != 'external')`;
   const jobsToEvaluate = db.prepare(`SELECT * FROM jobs ${whereClause}`).all() as JobRecord[];
 
-  const primaryTech = ['angular', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer', 'mean stack', 'full stack'];
+  const primaryTech = ['angular', 'angularjs', 'ionic', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer'];
   const secondaryTech = ['reactive forms', 'rest', 'jwt', 'route guards', 'interceptors', 'material', 'bootstrap', 'scss', 'css', 'html', 'git'];
   const unrelatedTech = [
     'backend', 'back-end', 'devops', 'python', 'ios', 'android', 'flutter',
@@ -41,6 +41,31 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
 
     const titleLower = job.title.toLowerCase();
     const textToMatch = `${job.title} ${job.company} ${job.location || ''} ${job.jd_text}`.toLowerCase();
+
+    // 1. Strict Role Filter: Candidate Mohammad Zuber ONLY targets Pure Angular / Frontend / UI roles!
+    // Disqualify any Java, React, Fullstack, .NET, Python, Backend, or non-Angular roles
+    const isForbiddenTech = /(^|\W)(java|spring|springboot|hibernate|j2ee|react|reactjs|react\.js|react-native|\.?net|dotnet|c#|asp\.net|python|django|flask|fastapi|php|laravel|codeigniter|wordpress|ruby|rails|golang|c\+\+|embedded|full\s*stack|fullstack|mean\s*stack|mern\s*stack|backend|back-end|qa|testing|tester|test engineer|devops|cloud|salesforce|servicenow|sharepoint|android|ios|flutter|data engineer|data scientist|musician|annotation|mentor|sales|recruiter)(\W|$)/i.test(titleLower);
+
+    const isAngularRole = /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
+      (/(^|\W)(frontend|front-end|ui)\s*(developer|engineer|consultant|specialist|programmer|web developer)(\W|$)/i.test(titleLower) && textToMatch.includes('angular') && !isForbiddenTech);
+
+    if (isForbiddenTech || !isAngularRole) {
+      const skipReason = isForbiddenTech 
+        ? `Non-Angular tech in title: "${job.title}" (Disqualified)`
+        : `Non-Angular role: "${job.title}" (Candidate strictly targets Angular/Frontend)`;
+
+      db.prepare(`
+        UPDATE jobs 
+        SET score = 0.0, evaluation_reason = ?, status = 'skipped' 
+        WHERE external_job_id = ?
+      `).run(skipReason, job.external_job_id);
+
+      job.score = 0.0;
+      job.evaluation_reason = skipReason;
+      job.status = 'skipped';
+      console.log(`⏩ [Role Mismatch Skipped] Job #${job.id}: ${job.title} @ ${job.company} (${skipReason})`);
+      continue;
+    }
 
     // 1. Strict Experience & Seniority Guard (Candidate has 2.5 YOE: strictly target 2-3 YOE, max 1-4 YOE)
     let minExp = -1;
@@ -91,9 +116,6 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       continue;
     }
 
-    // Direct check for unrelated/non-Angular roles in title
-    const isUnrelatedRole = /backend|back-end|java|c\+\+|\.net|c#|python|django|flask|php|laravel|ruby|rails|golang|android|ios|flutter|react native|qa|testing|tester|data engineer|data scientist|devops|sharepoint|shopify|musician|annotation|mentor|sales|recruiter/i.test(titleLower);
-
     let score = 1.0; // Baseline candidate score
     const matchedKeywords: string[] = [];
 
@@ -138,10 +160,6 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
       if (textToMatch.includes(tech)) {
         score -= 1.0;
       }
-    }
-
-    if (isUnrelatedRole) {
-      score -= 2.0; // Heavily penalize non-Angular/non-Frontend titles
     }
 
     // Clamp score strictly between 1.0 and 5.0

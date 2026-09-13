@@ -469,6 +469,20 @@ export async function applyNaukriJob(job: JobRecord, options: ApplyOptions = {})
       return 'not_logged_in';
     }
 
+    // 1a. Strict Role Filter: Candidate Mohammad Zuber ONLY targets Pure Angular / Frontend / UI roles!
+    // Disqualify any Java, React, Fullstack, .NET, Python, Backend roles
+    const titleLower = job.title.toLowerCase();
+    const isForbiddenTech = /(^|\W)(java|spring|springboot|hibernate|j2ee|react|reactjs|react\.js|react-native|\.?net|dotnet|c#|asp\.net|python|django|flask|fastapi|php|laravel|codeigniter|wordpress|ruby|rails|golang|c\+\+|embedded|full\s*stack|fullstack|mean\s*stack|mern\s*stack|backend|back-end|qa|testing|tester|test engineer|devops|cloud|salesforce|servicenow|sharepoint|android|ios|flutter|data engineer|data scientist|musician|annotation|mentor|sales|recruiter)(\W|$)/i.test(titleLower);
+
+    const isAngularRole = /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
+      (/(^|\W)(frontend|front-end|ui)\s*(developer|engineer|consultant|specialist|programmer|web developer)(\W|$)/i.test(titleLower) && !isForbiddenTech);
+
+    if (isForbiddenTech || !isAngularRole) {
+      console.log(`⏩ [Non-Angular Role Skipped]: "${job.title}" at ${job.company} is not a pure Angular role. Skipping.`);
+      updateJobStatus(job.external_job_id, 'skipped');
+      return 'skipped';
+    }
+
     // 1b. Strict Experience & Seniority Guard (Candidate has 2.5 YOE: strictly target 2-3 yrs, max 1-4 yrs)
     const combinedText = `${job.title} ${job.url} ${job.jd_text}`.toLowerCase();
     const isOverExperienced = /(\b[4-9]\s*to\s*\d+\s*years|\b1\d\s*to\s*\d+\s*years|\b[4-9]\s*-\s*\d+\s*yrs|\b[4-9]\+\s*yrs|\b[4-9]\+\s*years)/i.test(combinedText);

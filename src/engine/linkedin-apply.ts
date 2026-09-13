@@ -394,8 +394,14 @@ async function fillCoverLetterFields(page: Page, modal: any, job: JobRecord) {
 export async function applyLinkedInJob(job: JobRecord, options: ApplyOptions = { autoSubmit: false }): Promise<ApplyResult> {
   const profile = loadProfile();
   const blacklisted = profile.blacklistedCompanies || [];
-  if (blacklisted.some(b => job.company.toLowerCase().includes(b.toLowerCase()))) {
-    console.log(`🚫 [Blacklisted Company Skipped] Job "${job.title}" at "${job.company}" is blacklisted.`);
+  const titleLower = job.title.toLowerCase();
+  const isForbiddenTech = /(^|\W)(java|spring|springboot|hibernate|j2ee|react|reactjs|react\.js|react-native|\.?net|dotnet|c#|asp\.net|python|django|flask|fastapi|php|laravel|codeigniter|wordpress|ruby|rails|golang|c\+\+|embedded|full\s*stack|fullstack|mean\s*stack|mern\s*stack|backend|back-end|qa|testing|tester|test engineer|devops|cloud|salesforce|servicenow|sharepoint|android|ios|flutter|data engineer|data scientist|musician|annotation|mentor|sales|recruiter)(\W|$)/i.test(titleLower);
+
+  const isAngularRole = /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
+    (/(^|\W)(frontend|front-end|ui)\s*(developer|engineer|consultant|specialist|programmer|web developer)(\W|$)/i.test(titleLower) && !isForbiddenTech);
+
+  if (isForbiddenTech || !isAngularRole) {
+    console.log(`⏩ [Non-Angular Role Skipped]: "${job.title}" at ${job.company} is not a pure Angular role. Skipping.`);
     updateJobStatus(job.external_job_id, 'skipped');
     return 'skipped';
   }
