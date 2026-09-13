@@ -9,18 +9,50 @@ export interface LinkedInScanOptions {
   maxPages?: number;
   headless?: boolean;
   workTypes?: string; // e.g. '2,3' for Remote & Hybrid. Default: '2,3'
-  timePosted?: string; // e.g. 'r86400' for past 24 hours. Default: 'r86400'
+  timePosted?: string; // e.g. '15d', 'month', 'week', '24h', 'all', or direct 'r1296000'. Default: '15d'
+}
+
+/** Converts friendly time string to LinkedIn f_TPR seconds parameter */
+export function parseLinkedInTimePosted(input?: string): { f_tpr: string; label: string } {
+  if (!input) {
+    return { f_tpr: 'r1296000', label: 'Past 15 Days' };
+  }
+  const clean = input.trim().toLowerCase();
+  if (clean === 'all' || clean === 'any' || clean === 'none') {
+    return { f_tpr: '', label: 'Any Time' };
+  }
+  if (clean === '24h' || clean === '1d' || clean === '1' || clean === 'today' || clean === 'day') {
+    return { f_tpr: 'r86400', label: 'Past 24 Hours' };
+  }
+  if (clean === 'week' || clean === '7d' || clean === '7') {
+    return { f_tpr: 'r604800', label: 'Past Week (7 Days)' };
+  }
+  if (clean === 'month' || clean === '30d' || clean === '30') {
+    return { f_tpr: 'r2592000', label: 'Past Month (30 Days)' };
+  }
+  const dayMatch = clean.match(/^(\d+)d?(?:ays?)?$/);
+  if (dayMatch) {
+    const days = parseInt(dayMatch[1], 10);
+    const seconds = days * 86400;
+    return { f_tpr: `r${seconds}`, label: `Past ${days} Days` };
+  }
+  if (clean.startsWith('r')) {
+    return { f_tpr: clean, label: `Custom (${clean})` };
+  }
+  return { f_tpr: clean ? `r${clean}` : '', label: clean };
 }
 
 export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<JobRecord[]> {
-  const { query, location = 'India', maxPages = 3, headless = true, workTypes = '2,3', timePosted = 'r86400' } = options;
+  const { query, location = 'India', maxPages = 3, headless = true, workTypes = '2,3', timePosted = '15d' } = options;
 
-  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Remote/Hybrid + Past 24 Hours)...`);
+  const { f_tpr, label: timeLabel } = parseLinkedInTimePosted(timePosted);
+  console.log(`\n🔍 [LinkedIn Scanner] Starting search for "${query}" in "${location}" (Easy Apply + Remote/Hybrid + ${timeLabel})...`);
 
   const encodedQuery = encodeURIComponent(query);
   const encodedLocation = encodeURIComponent(location);
-  // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types) | f_TPR=r86400 (Past 24 Hours)
-  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=${workTypes}&f_TPR=${timePosted}`;
+  const timeQuery = f_tpr ? `&f_TPR=${f_tpr}` : '';
+  // f_AL=true (Easy Apply) | f_WT=2,3 (Remote & Hybrid Work Types) | f_TPR (Time Range)
+  const baseUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&location=${encodedLocation}&f_AL=true&f_WT=${workTypes}${timeQuery}`;
 
   let browserContext: BrowserContext | null = null;
   let standaloneBrowser: any = null;
@@ -66,7 +98,35 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
       // Random delay to appear human (2.5s – 4s)
       await page.waitForTimeout(2500 + Math.floor(Math.random() * 1500));
 
-      // Select job card containers (handles both authenticated & guest LinkedIn layouts)
+      // Auto-scroll the jobs container to trigger lazy loading of all ~25 cards on this page
+      for (let s = 0; s < 5; s++) {
+        await page.evaluate(() => {
+          const container = document.querySelector('.jobs-search-results-list') ||
+            document.querySelector('.scaffold-layout__list') ||
+            document.querySelector('.scaffold-layout__list-detail-inner') ||
+            document.querySelector('ul.jobs-search__results-list')?.parentElement ||
+            document.documentElement;
+          if (container) {
+            container.scrollBy(0, 1000);
+          }
+        }).catch(() => null);
+        await page.waitForTimeout(400);
+      }
+
+      // Check if more cards render by scrolling last visible card into view
+      const interimCards = page.locator('li.jobs-search-results__list-item, ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
+      const interimCount = await interimCards.count();
+      if (interimCount > 0 && interimCount < 20) {
+        await interimCards.nth(interimCount - 1).scrollIntoViewIfNeeded().catch(() => null);
+        await page.waitForTimeout(400);
+        await page.evaluate(() => {
+          const container = document.querySelector('.jobs-search-results-list') || document.documentElement;
+          if (container) container.scrollBy(0, 1200);
+        }).catch(() => null);
+        await page.waitForTimeout(400);
+      }
+
+      // Select loaded job card containers (handles both authenticated & guest LinkedIn layouts)
       const jobCards = page.locator('li.jobs-search-results__list-item, ul.jobs-search__results-list > li, div.base-card, div.job-search-card, div.job-card-container');
       const count = await jobCards.count();
 
@@ -134,7 +194,7 @@ export async function scanLinkedInJobs(options: LinkedInScanOptions): Promise<Jo
             company,
             location: locText,
             url: url.startsWith('http') ? url : `https://www.linkedin.com${url}`,
-            jd_text: `LinkedIn Remote/Hybrid Easy Apply Job: ${title} at ${company}`,
+            jd_text: `LinkedIn Remote/Hybrid Easy Apply Job for "${query}": ${title} at ${company}. Matched Query: ${query}. Location: ${locText}. Snippet: ${cardText.replace(/\s+/g, ' ').slice(0, 300)}`,
             apply_type: 'easy-apply',
             score: 0.0,
             evaluation_reason: isBlacklisted ? 'Blacklisted fake company' : '',

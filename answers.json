@@ -195,5 +195,9 @@
   "can you join immediate or within a week?": "Yes",
   "are you available for virtual interview?": "Yes",
   "how many years of experience do you have in spring boot?": "0",
-  "are you available for a interview?(virtual)": "Yes"
+  "are you available for a interview?(virtual)": "Yes",
+  "how many years of work experience do you have? (only whole numbers allowed)": "2",
+  "how many years of work experience do you have with blazor?": "0",
+  "what is your bachelor's gpa on a /10 scale?": "7.61",
+  "did you graduate from a top tier 1 institution in india? (i.e. iit, iiit, nit)": "No"
 }

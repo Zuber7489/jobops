@@ -27,7 +27,12 @@ npx ts-node src/index.ts naukri-scan --query "Angular Developer" --location "Ind
 
 ### 🔷 2b. Scan LinkedIn Easy Apply Jobs
 ```bash
-npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 3
+# Default: Scans past 15 days (Easy Apply + Remote & Hybrid + Auto-Scrolls 25 jobs/page)
+npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 8
+
+# Custom time filter options: 15d, month (30d), week (7d), 24h, or all
+npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 8 --time 15d
+npx ts-node src/index.ts linkedin-scan --query "Angular Developer" --location "India" --pages 8 --time month
 ```
 
 ### 🟣 2c. Scan Indeed India Easily Apply Jobs
@@ -37,11 +42,15 @@ npx ts-node src/index.ts indeed-scan --query "Angular Developer" --location "Ind
 
 ---
 
-## ⚡ Step 3: Evaluate Scanned Jobs with Gemini AI Matcher
+## ⚡ Step 3: Evaluate Scanned Jobs with Match Engine
 ```bash
+# Evaluates scanned jobs against candidate profile (profile.yml)
 npx ts-node src/index.ts evaluate
+
+# Re-evaluate all jobs (including previously skipped frontend jobs)
+npx ts-node src/index.ts evaluate --all
 ```
-> Evaluates all newly scanned jobs across all platforms against your candidate profile (`profile.yml`) and scores them from **1.0 to 5.0**.
+> Evaluates all jobs across all platforms against your candidate profile (`profile.yml`) and scores them from **1.0 to 5.0**. Fully matches Angular, AngularJS, Ionic, and Frontend/UI Developer positions.
 
 ---
 
@@ -93,7 +102,10 @@ npx ts-node src/index.ts status
 | `--min-score <score>` | `2.5` | Minimum threshold score (e.g. `3.0` for top matches only) |
 | `--auto` | `false` | 100% hands-free mode. Omit flag for interactive confirmation `[y/N]` before each submit |
 | `--limit <n>` | `25` | Max applications per session (anti-ban safety cap) |
-| `--pages <number>` | `3` | Number of search result pages to scan (~20-40 jobs per page) |
+| `--pages <number>` | `5` | Number of search result pages to scan (~25 jobs per page on LinkedIn) |
+| `-t, --time <value>` | `15d` | LinkedIn time posted filter (`15d`, `month`, `week`, `24h`, `all`) |
+| `--days <number>` | `15` | Shortcut for days posted filter on LinkedIn (e.g. `--days 15`) |
+| `--all` | `false` | For `evaluate`: re-evaluates all jobs including previously skipped |
 | `--headed` | `false` | Run browser in visible window instead of background |
 
 ---

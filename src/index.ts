@@ -63,21 +63,23 @@ program
 // Command 2: linkedin-scan
 program
   .command('linkedin-scan')
-  .description('Scan jobs from LinkedIn Easy Apply (Filtered for Remote & Hybrid, Past 24 hours)')
+  .description('Scan jobs from LinkedIn Easy Apply (Filtered for Remote & Hybrid, Past 15 days by default)')
   .option('-q, --query <text>', 'Job title / skills query', 'Angular Developer')
   .option('-l, --location <city>', 'Job location', 'India')
-  .option('-p, --pages <number>', 'Number of pages to scan', '3')
+  .option('-p, --pages <number>', 'Number of pages to scan', '5')
   .option('--work-types <types>', 'LinkedIn work type filter (2=Remote, 3=Hybrid, default: "2,3")', '2,3')
-  .option('-t, --time <seconds>', 'LinkedIn time posted filter (default: "r86400" for past 24 hours)', 'r86400')
+  .option('-t, --time <value>', 'LinkedIn time posted filter (e.g. "15d", "month", "week", "24h", "all". Default: "15d")', '15d')
+  .option('--days <number>', 'Shortcut for days posted (e.g. --days 15)')
   .option('--headed', 'Run browser in headed mode', false)
   .action(async (options) => {
+    const timeFilter = options.days ? `${options.days}d` : options.time;
     await scanLinkedInJobs({
       query: options.query,
       location: options.location,
       maxPages: parseInt(options.pages, 10),
       headless: !options.headed,
       workTypes: options.workTypes,
-      timePosted: options.time
+      timePosted: timeFilter
     });
   });
 
@@ -119,8 +121,9 @@ program
 program
   .command('evaluate')
   .description('Evaluate all scanned jobs (LinkedIn, Indeed & Naukri) against candidate skills')
-  .action(() => {
-    evaluateJobs();
+  .option('--all', 'Re-evaluate all jobs including previously skipped (excluding blacklisted)', false)
+  .action((options) => {
+    evaluateJobs({ forceAll: true, reevaluateSkipped: options.all });
   });
 
 // Command 4: linkedin-apply

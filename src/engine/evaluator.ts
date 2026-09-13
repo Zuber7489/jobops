@@ -1,15 +1,31 @@
 import { getDb, JobRecord } from '../db/schema';
 import { loadProfile } from '../config';
 
-export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
+export interface EvaluateOptions {
+  forceAll?: boolean;
+  reevaluateSkipped?: boolean;
+}
+
+export function evaluateJobs(options?: EvaluateOptions | boolean): JobRecord[] {
+  const opts: EvaluateOptions = typeof options === 'boolean' 
+    ? { forceAll: options } 
+    : (options || { forceAll: true });
+  const forceAll = opts.forceAll ?? true;
+  const reevaluateSkipped = opts.reevaluateSkipped ?? false;
+
   const profile = loadProfile();
   const db = getDb();
 
   console.log(`\n⚡ [Instant Match Engine] Evaluating scanned jobs for candidate ${profile.name}...`);
 
-  const whereClause = forceAll 
-    ? `WHERE status IN ('scanned', 'evaluated') AND (apply_type IS NULL OR apply_type != 'external')` 
-    : `WHERE status = 'scanned' AND (apply_type IS NULL OR apply_type != 'external')`;
+  let whereClause = '';
+  if (reevaluateSkipped) {
+    whereClause = `WHERE status IN ('scanned', 'evaluated', 'skipped') AND (apply_type IS NULL OR apply_type != 'external') AND evaluation_reason != 'Blacklisted fake company'`;
+  } else if (forceAll) {
+    whereClause = `WHERE status IN ('scanned', 'evaluated') AND (apply_type IS NULL OR apply_type != 'external')`;
+  } else {
+    whereClause = `WHERE status = 'scanned' AND (apply_type IS NULL OR apply_type != 'external')`;
+  }
   const jobsToEvaluate = db.prepare(`SELECT * FROM jobs ${whereClause}`).all() as JobRecord[];
 
   const primaryTech = ['angular', 'angularjs', 'ionic', 'typescript', 'rxjs', 'signals', 'standalone components', 'frontend', 'ui developer', 'web developer'];
@@ -46,10 +62,13 @@ export function evaluateJobs(forceAll: boolean = true): JobRecord[] {
     // Disqualify any Java, React, Fullstack, .NET, Python, Backend, or non-Angular roles
     const isForbiddenTech = /(^|\W)(java|spring|springboot|hibernate|j2ee|react|reactjs|react\.js|react-native|\.?net|dotnet|c#|asp\.net|python|django|flask|fastapi|php|laravel|codeigniter|wordpress|ruby|rails|golang|c\+\+|embedded|full\s*stack|fullstack|mean\s*stack|mern\s*stack|backend|back-end|qa|testing|tester|test engineer|devops|cloud|salesforce|servicenow|sharepoint|android|ios|flutter|data engineer|data scientist|musician|annotation|mentor|sales|recruiter)(\W|$)/i.test(titleLower);
 
-    const isAngularRole = /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
-      (/(^|\W)(frontend|front-end|ui)\s*(developer|engineer|consultant|specialist|programmer|web developer)(\W|$)/i.test(titleLower) && textToMatch.includes('angular') && !isForbiddenTech);
+    // Pure Angular, AngularJS, Ionic, or Frontend / UI / Web developer roles (as long as forbidden tech like React/Java/Python/.NET is NOT present), or jobs matching Angular in JD
+    const isAngularOrFrontendRole = 
+      /(^|\W)(angular|angularjs|ionic)(\W|$)/i.test(titleLower) ||
+      (/(^|\W)(frontend|front-end|ui|web)\s*(developer|engineer|consultant|specialist|programmer)(\W|$)/i.test(titleLower) && !isForbiddenTech) ||
+      (textToMatch.includes('angular') && !isForbiddenTech);
 
-    if (isForbiddenTech || !isAngularRole) {
+    if (isForbiddenTech || !isAngularOrFrontendRole) {
       const skipReason = isForbiddenTech 
         ? `Non-Angular tech in title: "${job.title}" (Disqualified)`
         : `Non-Angular role: "${job.title}" (Candidate strictly targets Angular/Frontend)`;
